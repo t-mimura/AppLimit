@@ -2,6 +2,28 @@
 <resources>
     <string name="app_name">AppLimit</string>
 
+    <!-- Main Screen -->
+    <string name="empty_list_message">制限対象のアプリがありません\n+ボタンから追加してください</string>
+    <string name="limit_time_label">制限時間: %d分</string>
+
+    <!-- App Select Screen -->
+    <string name="select_app_title">アプリを選択</string>
+    <string name="search_hint">アプリ名で検索</string>
+
+    <!-- Settings Screen -->
+    <string name="enabled_label">有効</string>
+    <string name="limit_minutes_label">制限時間</string>
+    <string name="cooldown_minutes_label">クールダウン時間</string>
+    <string name="extension_minutes_label">延長時間</string>
+    <string name="minutes_format">%d分</string>
+    <string name="delete_button">この対象アプリを削除</string>
+
+    <!-- Permission Screen -->
+    <string name="permission_title">権限の設定が必要です</string>
+    <string name="permission_description">AppLimitが正しく動作するために、以下の権限を許可してください。</string>
+    <string name="grant_usage_stats">使用状況へのアクセスを許可</string>
+    <string name="grant_overlay">他のアプリの上に表示を許可</string>
+
     <!-- Overlay -->
     <string name="warning_message">%1$sの制限時間に達しました\n使用時間: %2$d分</string>
     <string name="cooldown_message">%1$sはクールダウン中です\n残り: %2$d分</string>
