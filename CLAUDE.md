@@ -37,7 +37,7 @@ pre-commitフックが設定済みであれば自動実行される。
 ### パッケージ構成
 
 ```
-com.example.applimit
+studio.hazeray.applimit
 ├── di/           # Hiltモジュール
 ├── data/         # DB, Repository
 ├── domain/       # ドメインモデル

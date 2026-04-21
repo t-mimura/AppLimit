@@ -15,7 +15,7 @@
 | クラス・インターフェース | UpperCamelCase | `AppRepository`, `MonitorService` |
 | 関数・プロパティ | lowerCamelCase | `getTargetApps()`, `isRunning` |
 | 定数 (const val, companion) | SCREAMING_SNAKE_CASE | `DEFAULT_LIMIT_MINUTES` |
-| パッケージ | すべて小文字、区切りなし | `com.example.applimit.data.repository` |
+| パッケージ | すべて小文字、区切りなし | `studio.hazeray.applimit.data.repository` |
 | Compose関数 | UpperCamelCase | `MainScreen()`, `AppListItem()` |
 
 ### Nullable の扱い

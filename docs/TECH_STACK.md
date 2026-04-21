@@ -73,7 +73,7 @@ UI (Compose) → ViewModel → Repository → DataSource (Room)
 ## ディレクトリ構成（予定）
 
 ```
-app/src/main/java/com/example/applimit/
+app/src/main/java/studio/hazeray/applimit/
 ├── di/                  # Hiltモジュール
 ├── data/
 │   ├── db/              # Room (Entity, Dao, Database)

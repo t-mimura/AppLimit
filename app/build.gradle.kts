@@ -8,11 +8,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.applimit"
+    namespace = "studio.hazeray.applimit"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.applimit"
+        applicationId = "studio.hazeray.applimit"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
