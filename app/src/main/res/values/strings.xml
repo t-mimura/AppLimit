@@ -1,4 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">AppLimit</string>
+
+    <!-- Overlay -->
+    <string name="warning_message">%1$sの制限時間に達しました\n使用時間: %2$d分</string>
+    <string name="cooldown_message">%1$sはクールダウン中です\n残り: %2$d分</string>
+    <string name="extend_button">延長する</string>
+    <string name="dismiss_button">閉じる</string>
+
+    <!-- Notification Channels -->
+    <string name="monitor_channel_name">監視サービス</string>
+    <string name="monitor_channel_desc">アプリ使用時間の監視中に表示される通知</string>
+    <string name="warning_channel_name">使用時間警告</string>
+    <string name="warning_channel_desc">制限時間が近づいた時の警告通知</string>
+
+    <!-- Notifications -->
+    <string name="monitor_notification_title">AppLimit 監視中</string>
+    <string name="monitor_notification_text">アプリの使用時間を監視しています</string>
+    <string name="warning_notification_title">使用時間警告</string>
+    <string name="warning_notification_text">%1$sの制限時間まで残り%2$d分です</string>
+    <string name="limit_reached_title">制限時間到達</string>
+    <string name="limit_reached_text">%1$sの制限時間に達しました</string>
 </resources>
