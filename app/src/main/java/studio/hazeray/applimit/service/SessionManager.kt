@@ -34,7 +34,7 @@ class SessionManager @Inject constructor() {
                 // Already warning, do nothing
             }
             SessionState.COOLDOWN -> {
-                _currentSession.value = session.copy(state = SessionState.WARNING)
+                // Stay in COOLDOWN; user must explicitly extend to resume
             }
         }
     }
@@ -45,7 +45,7 @@ class SessionManager @Inject constructor() {
 
     fun extend(targetApp: TargetApp, currentTimeMillis: Long) {
         val session = _currentSession.value ?: return
-        if (session.state != SessionState.WARNING) return
+        if (session.state != SessionState.WARNING && session.state != SessionState.COOLDOWN) return
 
         _currentSession.value = session.copy(
             state = SessionState.ACTIVE,

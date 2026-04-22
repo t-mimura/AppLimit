@@ -91,17 +91,19 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `クールダウン中に対象アプリ検出でWARNINGになる`() {
+    fun `クールダウン中に対象アプリ検出してもCOOLDOWNのまま変わらない`() {
         sessionManager.onTargetAppDetected(targetApp, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
         sessionManager.checkState(afterLimit)
         sessionManager.dismiss(targetApp, afterLimit)
+        val cooldownUntilBefore = sessionManager.currentSession.value?.cooldownUntil
 
         val duringCooldown = afterLimit + 1000
         sessionManager.onTargetAppDetected(targetApp, duringCooldown)
 
         val session = sessionManager.currentSession.value
-        assertEquals(SessionState.WARNING, session?.state)
+        assertEquals(SessionState.COOLDOWN, session?.state)
+        assertEquals(cooldownUntilBefore, session?.cooldownUntil)
     }
 
     @Test
@@ -136,18 +138,18 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `クールダウン中の延長で一時的にACTIVEに戻る`() {
+    fun `COOLDOWNから延長でACTIVEに戻る`() {
         sessionManager.onTargetAppDetected(targetApp, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
         sessionManager.checkState(afterLimit)
         sessionManager.dismiss(targetApp, afterLimit)
 
         val duringCooldown = afterLimit + 1000
-        sessionManager.onTargetAppDetected(targetApp, duringCooldown)
         sessionManager.extend(targetApp, duringCooldown)
 
         val session = sessionManager.currentSession.value
         assertEquals(SessionState.ACTIVE, session?.state)
         assertEquals(duringCooldown + 5 * 60 * 1000, session?.expiresAt)
+        assertNull(session?.cooldownUntil)
     }
 }

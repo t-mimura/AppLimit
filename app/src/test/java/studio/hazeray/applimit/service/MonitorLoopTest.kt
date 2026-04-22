@@ -2,6 +2,7 @@ package studio.hazeray.applimit.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertNull
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import studio.hazeray.applimit.domain.model.SessionState
@@ -81,5 +82,23 @@ class MonitorLoopTest {
 
         // Timer doesn't stop, session stays ACTIVE
         assertEquals(SessionState.ACTIVE, sessionManager.currentSession.value?.state)
+    }
+
+    @Test
+    fun `tickは対象アプリがフォアグラウンドなら対象TargetAppを返す`() {
+        usageStatsProvider.foregroundPackage = "com.instagram.android"
+
+        val matched = monitorLoop.tick(enabledApps, baseTime)
+
+        assertSame(instagram, matched)
+    }
+
+    @Test
+    fun `tickは対象外アプリのときnullを返す`() {
+        usageStatsProvider.foregroundPackage = "com.twitter.android"
+
+        val matched = monitorLoop.tick(enabledApps, baseTime)
+
+        assertNull(matched)
     }
 }

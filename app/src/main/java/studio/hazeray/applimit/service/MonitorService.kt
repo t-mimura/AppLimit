@@ -68,16 +68,20 @@ class MonitorService : LifecycleService() {
                 val enabledApps = repository.getEnabledTargetApps().first()
                 val currentTime = System.currentTimeMillis()
 
-                monitorLoop.tick(enabledApps, currentTime)
+                val matchedApp = monitorLoop.tick(enabledApps, currentTime)
 
-                handleSessionState(enabledApps, currentTime)
+                handleSessionState(enabledApps, matchedApp, currentTime)
 
                 delay(POLLING_INTERVAL_MS)
             }
         }
     }
 
-    private fun handleSessionState(enabledApps: List<TargetApp>, currentTime: Long) {
+    private fun handleSessionState(
+        enabledApps: List<TargetApp>,
+        matchedApp: TargetApp?,
+        currentTime: Long
+    ) {
         val session = sessionManager.currentSession.value ?: run {
             overlayController.hideOverlay()
             warningNotificationSent = false
@@ -129,6 +133,12 @@ class MonitorService : LifecycleService() {
                 }
             }
             SessionState.COOLDOWN -> {
+                if (matchedApp?.id != session.targetAppId) {
+                    if (overlayController.isShowing()) {
+                        overlayController.hideOverlay()
+                    }
+                    return
+                }
                 if (!overlayController.isShowing()) {
                     val cooldownUntil = session.cooldownUntil ?: return
                     val remainingMinutes = ((cooldownUntil - currentTime) / 60_000).toInt()
