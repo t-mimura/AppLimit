@@ -12,29 +12,30 @@ import studio.hazeray.applimit.domain.model.TargetApp
 @Singleton
 class SessionManager @Inject constructor() {
 
-    private val _currentSession = MutableStateFlow<AppSession?>(null)
-    val currentSession: StateFlow<AppSession?> = _currentSession.asStateFlow()
+    private val _sessions = MutableStateFlow<Map<Long, AppSession>>(emptyMap())
+    val sessions: StateFlow<Map<Long, AppSession>> = _sessions.asStateFlow()
+
+    fun getSession(targetAppId: Long): AppSession? = _sessions.value[targetAppId]
 
     fun onTargetAppDetected(targetApp: TargetApp, currentTimeMillis: Long) {
-        val session = _currentSession.value
+        val session = _sessions.value[targetApp.id]
 
         when (session?.state) {
             null, SessionState.IDLE -> {
-                _currentSession.value = AppSession(
-                    targetAppId = targetApp.id,
-                    state = SessionState.ACTIVE,
-                    startedAt = currentTimeMillis,
-                    expiresAt = currentTimeMillis + targetApp.limitMinutes * 60 * 1000L
+                updateSession(
+                    targetApp.id,
+                    AppSession(
+                        targetAppId = targetApp.id,
+                        state = SessionState.ACTIVE,
+                        startedAt = currentTimeMillis,
+                        expiresAt = currentTimeMillis + targetApp.limitMinutes * 60 * 1000L
+                    )
                 )
             }
-            SessionState.ACTIVE -> {
-                // Already active for this app, do nothing
-            }
-            SessionState.WARNING -> {
-                // Already warning, do nothing
-            }
+            SessionState.ACTIVE,
+            SessionState.WARNING,
             SessionState.COOLDOWN -> {
-                // Stay in COOLDOWN; user must explicitly extend to resume
+                // Keep existing session for this app as-is
             }
         }
     }
@@ -44,49 +45,66 @@ class SessionManager @Inject constructor() {
     }
 
     fun extend(targetApp: TargetApp, currentTimeMillis: Long) {
-        val session = _currentSession.value ?: return
+        val session = _sessions.value[targetApp.id] ?: return
         if (session.state != SessionState.WARNING && session.state != SessionState.COOLDOWN) return
 
-        _currentSession.value = session.copy(
-            state = SessionState.ACTIVE,
-            expiresAt = currentTimeMillis + targetApp.extensionMinutes * 60 * 1000L,
-            cooldownUntil = null
+        updateSession(
+            targetApp.id,
+            session.copy(
+                state = SessionState.ACTIVE,
+                expiresAt = currentTimeMillis + targetApp.extensionMinutes * 60 * 1000L,
+                cooldownUntil = null
+            )
         )
     }
 
     fun dismiss(targetApp: TargetApp, currentTimeMillis: Long) {
-        val session = _currentSession.value ?: return
+        val session = _sessions.value[targetApp.id] ?: return
         if (session.state != SessionState.WARNING) return
 
-        _currentSession.value = session.copy(
-            state = SessionState.COOLDOWN,
-            cooldownUntil = currentTimeMillis + targetApp.cooldownMinutes * 60 * 1000L
+        updateSession(
+            targetApp.id,
+            session.copy(
+                state = SessionState.COOLDOWN,
+                cooldownUntil = currentTimeMillis + targetApp.cooldownMinutes * 60 * 1000L
+            )
         )
     }
 
-    fun checkState(currentTimeMillis: Long): AppSession? {
-        val session = _currentSession.value ?: return null
+    fun checkState(currentTimeMillis: Long) {
+        val current = _sessions.value
+        var next: MutableMap<Long, AppSession>? = null
 
-        when (session.state) {
-            SessionState.ACTIVE -> {
-                if (currentTimeMillis >= session.expiresAt) {
-                    _currentSession.value = session.copy(state = SessionState.WARNING)
+        for ((id, session) in current) {
+            when (session.state) {
+                SessionState.ACTIVE -> {
+                    if (currentTimeMillis >= session.expiresAt) {
+                        val updated = session.copy(state = SessionState.WARNING)
+                        if (next == null) next = current.toMutableMap()
+                        next[id] = updated
+                    }
                 }
-            }
-            SessionState.COOLDOWN -> {
-                val cooldownUntil = session.cooldownUntil
-                if (cooldownUntil != null && currentTimeMillis >= cooldownUntil) {
-                    _currentSession.value = null
-                    return null
+                SessionState.COOLDOWN -> {
+                    val cooldownUntil = session.cooldownUntil
+                    if (cooldownUntil != null && currentTimeMillis >= cooldownUntil) {
+                        if (next == null) next = current.toMutableMap()
+                        next.remove(id)
+                    }
                 }
+                else -> { /* no automatic transition */ }
             }
-            else -> { /* no automatic transition */ }
         }
 
-        return _currentSession.value
+        if (next != null) {
+            _sessions.value = next
+        }
     }
 
     fun reset() {
-        _currentSession.value = null
+        _sessions.value = emptyMap()
+    }
+
+    private fun updateSession(id: Long, session: AppSession) {
+        _sessions.value = _sessions.value + (id to session)
     }
 }

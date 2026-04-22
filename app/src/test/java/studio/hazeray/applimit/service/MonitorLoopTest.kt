@@ -1,6 +1,7 @@
 package studio.hazeray.applimit.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.BeforeEach
@@ -24,7 +25,17 @@ class MonitorLoopTest {
         extensionMinutes = 5
     )
 
+    private val twitter = TargetApp(
+        id = 2L,
+        packageName = "com.twitter.android",
+        appName = "Twitter",
+        limitMinutes = 15,
+        cooldownMinutes = 120,
+        extensionMinutes = 5
+    )
+
     private val enabledApps = listOf(instagram)
+    private val enabledAppsBoth = listOf(instagram, twitter)
     private val baseTime = 1_000_000L
 
     @BeforeEach
@@ -40,7 +51,7 @@ class MonitorLoopTest {
 
         monitorLoop.tick(enabledApps, baseTime)
 
-        assertEquals(SessionState.ACTIVE, sessionManager.currentSession.value?.state)
+        assertEquals(SessionState.ACTIVE, sessionManager.getSession(instagram.id)?.state)
     }
 
     @Test
@@ -49,7 +60,7 @@ class MonitorLoopTest {
 
         monitorLoop.tick(enabledApps, baseTime)
 
-        assertNull(sessionManager.currentSession.value)
+        assertNull(sessionManager.getSession(instagram.id))
     }
 
     @Test
@@ -58,7 +69,7 @@ class MonitorLoopTest {
 
         monitorLoop.tick(enabledApps, baseTime)
 
-        assertNull(sessionManager.currentSession.value)
+        assertNull(sessionManager.getSession(instagram.id))
     }
 
     @Test
@@ -69,7 +80,7 @@ class MonitorLoopTest {
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
         monitorLoop.tick(enabledApps, afterLimit)
 
-        assertEquals(SessionState.WARNING, sessionManager.currentSession.value?.state)
+        assertEquals(SessionState.WARNING, sessionManager.getSession(instagram.id)?.state)
     }
 
     @Test
@@ -81,7 +92,7 @@ class MonitorLoopTest {
         monitorLoop.tick(enabledApps, baseTime + 3000)
 
         // Timer doesn't stop, session stays ACTIVE
-        assertEquals(SessionState.ACTIVE, sessionManager.currentSession.value?.state)
+        assertEquals(SessionState.ACTIVE, sessionManager.getSession(instagram.id)?.state)
     }
 
     @Test
@@ -100,5 +111,37 @@ class MonitorLoopTest {
         val matched = monitorLoop.tick(enabledApps, baseTime)
 
         assertNull(matched)
+    }
+
+    @Test
+    fun `AがACTIVEのままBに切り替わってもBのセッションがACTIVEになる`() {
+        usageStatsProvider.foregroundPackage = "com.instagram.android"
+        monitorLoop.tick(enabledAppsBoth, baseTime)
+
+        usageStatsProvider.foregroundPackage = "com.twitter.android"
+        val switchTime = baseTime + 30 * 1000
+        monitorLoop.tick(enabledAppsBoth, switchTime)
+
+        assertEquals(SessionState.ACTIVE, sessionManager.getSession(instagram.id)?.state)
+        val sessionB = sessionManager.getSession(twitter.id)
+        assertEquals(SessionState.ACTIVE, sessionB?.state)
+        assertEquals(switchTime + 15 * 60 * 1000, sessionB?.expiresAt)
+    }
+
+    @Test
+    fun `AがCOOLDOWNでもBを検出するとBのACTIVEセッションが作成される`() {
+        usageStatsProvider.foregroundPackage = "com.instagram.android"
+        monitorLoop.tick(enabledAppsBoth, baseTime)
+        val afterA = baseTime + 10 * 60 * 1000 + 1
+        monitorLoop.tick(enabledAppsBoth, afterA)
+        sessionManager.dismiss(instagram, afterA)
+
+        usageStatsProvider.foregroundPackage = "com.twitter.android"
+        val detectB = afterA + 1000
+        monitorLoop.tick(enabledAppsBoth, detectB)
+
+        assertEquals(SessionState.COOLDOWN, sessionManager.getSession(instagram.id)?.state)
+        assertNotNull(sessionManager.getSession(twitter.id))
+        assertEquals(SessionState.ACTIVE, sessionManager.getSession(twitter.id)?.state)
     }
 }

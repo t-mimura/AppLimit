@@ -28,7 +28,7 @@ class MonitorService : LifecycleService() {
     @Inject lateinit var overlayController: OverlayController
 
     private var isMonitoring = false
-    private var warningNotificationSent = false
+    private var warningNotifiedAppIds: Set<Long> = emptySet()
 
     override fun onCreate() {
         super.onCreate()
@@ -70,26 +70,30 @@ class MonitorService : LifecycleService() {
 
                 val matchedApp = monitorLoop.tick(enabledApps, currentTime)
 
-                handleSessionState(enabledApps, matchedApp, currentTime)
+                handleSessionState(matchedApp, currentTime)
 
                 delay(POLLING_INTERVAL_MS)
             }
         }
     }
 
-    private fun handleSessionState(
-        enabledApps: List<TargetApp>,
-        matchedApp: TargetApp?,
-        currentTime: Long
-    ) {
-        val session = sessionManager.currentSession.value ?: run {
-            overlayController.hideOverlay()
-            warningNotificationSent = false
-            notificationHelper.cancelWarningNotifications()
+    private fun handleSessionState(matchedApp: TargetApp?, currentTime: Long) {
+        if (matchedApp == null) {
+            if (overlayController.isShowing()) {
+                overlayController.hideOverlay()
+            }
             return
         }
 
-        val targetApp = enabledApps.find { it.id == session.targetAppId } ?: return
+        val session = sessionManager.getSession(matchedApp.id)
+        if (session == null) {
+            if (overlayController.isShowing()) {
+                overlayController.hideOverlay()
+            }
+            return
+        }
+
+        val targetApp = matchedApp
 
         when (session.state) {
             SessionState.ACTIVE -> {
@@ -97,12 +101,14 @@ class MonitorService : LifecycleService() {
                 val remainingMinutes = (remainingMs / 60_000).toInt()
                 val warningThreshold = if (targetApp.limitMinutes <= 5) 1 else 5
 
-                if (remainingMinutes <= warningThreshold && !warningNotificationSent) {
+                if (remainingMinutes <= warningThreshold &&
+                    targetApp.id !in warningNotifiedAppIds
+                ) {
                     notificationHelper.showWarningNotification(
                         targetApp.appName,
                         remainingMinutes
                     )
-                    warningNotificationSent = true
+                    warningNotifiedAppIds = warningNotifiedAppIds + targetApp.id
                 }
 
                 if (overlayController.isShowing()) {
@@ -120,7 +126,7 @@ class MonitorService : LifecycleService() {
                         onExtend = {
                             sessionManager.extend(targetApp, System.currentTimeMillis())
                             overlayController.hideOverlay()
-                            warningNotificationSent = false
+                            warningNotifiedAppIds = warningNotifiedAppIds - targetApp.id
                             notificationHelper.cancelWarningNotifications()
                         },
                         onDismiss = {
@@ -133,12 +139,6 @@ class MonitorService : LifecycleService() {
                 }
             }
             SessionState.COOLDOWN -> {
-                if (matchedApp?.id != session.targetAppId) {
-                    if (overlayController.isShowing()) {
-                        overlayController.hideOverlay()
-                    }
-                    return
-                }
                 if (!overlayController.isShowing()) {
                     val cooldownUntil = session.cooldownUntil ?: return
                     val remainingMinutes = ((cooldownUntil - currentTime) / 60_000).toInt()
@@ -148,7 +148,7 @@ class MonitorService : LifecycleService() {
                         onExtend = {
                             sessionManager.extend(targetApp, System.currentTimeMillis())
                             overlayController.hideOverlay()
-                            warningNotificationSent = false
+                            warningNotifiedAppIds = warningNotifiedAppIds - targetApp.id
                         },
                         onDismiss = {
                             overlayController.hideOverlay()
@@ -158,8 +158,9 @@ class MonitorService : LifecycleService() {
                 }
             }
             SessionState.IDLE -> {
-                overlayController.hideOverlay()
-                warningNotificationSent = false
+                if (overlayController.isShowing()) {
+                    overlayController.hideOverlay()
+                }
             }
         }
     }
