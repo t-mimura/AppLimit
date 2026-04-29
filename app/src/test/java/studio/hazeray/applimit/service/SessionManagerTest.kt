@@ -1,6 +1,7 @@
 package studio.hazeray.applimit.service
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertNotNull
 import org.junit.jupiter.api.Assertions.assertNull
 import org.junit.jupiter.api.Assertions.assertTrue
@@ -28,6 +29,7 @@ class SessionManagerTest {
         cooldownMinutes = 120,
         extensionMinutes = 5
     )
+    private val enabledApps = listOf(appA, appB)
     private val baseTime = 1_000_000L
 
     @BeforeEach
@@ -53,50 +55,64 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `制限時間超過でACTIVEからWARNINGに遷移する`() {
+    fun `制限時間超過で自動的にACTIVEからCOOLDOWNに遷移する`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
 
-        sessionManager.checkState(afterLimit)
+        sessionManager.checkState(enabledApps, afterLimit)
 
-        assertEquals(SessionState.WARNING, sessionManager.getSession(appA.id)?.state)
+        val session = sessionManager.getSession(appA.id)
+        assertEquals(SessionState.COOLDOWN, session?.state)
+        // cooldownUntil is calculated from expiresAt (limit reached time), not from check time
+        assertEquals(baseTime + 10 * 60 * 1000 + 60 * 60 * 1000, session?.cooldownUntil)
     }
 
     @Test
-    fun `延長でWARNINGからACTIVEに戻る`() {
+    fun `COOLDOWNから延長でACTIVEに戻る`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimit)
+        sessionManager.checkState(enabledApps, afterLimit)
 
         sessionManager.extend(appA, afterLimit)
 
         val session = sessionManager.getSession(appA.id)
         assertEquals(SessionState.ACTIVE, session?.state)
         assertEquals(afterLimit + 5 * 60 * 1000, session?.expiresAt)
+        assertNull(session?.cooldownUntil)
+        assertTrue(session?.isExtended == true)
     }
 
     @Test
-    fun `閉じるでWARNINGからCOOLDOWNに遷移する`() {
+    fun `初回検出時のセッションはisExtendedがfalse`() {
+        sessionManager.onTargetAppDetected(appA, baseTime)
+
+        assertFalse(sessionManager.getSession(appA.id)?.isExtended == true)
+    }
+
+    @Test
+    fun `延長後さらに制限時間超過でCOOLDOWNに戻り新しいcooldownUntilが設定される`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimit)
+        sessionManager.checkState(enabledApps, afterLimit)
+        sessionManager.extend(appA, afterLimit)
 
-        sessionManager.dismiss(appA, afterLimit)
+        val afterExtension = afterLimit + 5 * 60 * 1000 + 1
+        sessionManager.checkState(enabledApps, afterExtension)
 
         val session = sessionManager.getSession(appA.id)
         assertEquals(SessionState.COOLDOWN, session?.state)
-        assertEquals(afterLimit + 60 * 60 * 1000, session?.cooldownUntil)
+        // Fresh cooldown period based on the extended expiresAt
+        assertEquals(afterLimit + 5 * 60 * 1000 + 60 * 60 * 1000, session?.cooldownUntil)
     }
 
     @Test
-    fun `クールダウン時間経過でCOOLDOWNからIDLEに遷移する`() {
+    fun `クールダウン時間経過でセッションが削除される`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimit)
-        sessionManager.dismiss(appA, afterLimit)
+        sessionManager.checkState(enabledApps, afterLimit)
 
-        val afterCooldown = afterLimit + 60 * 60 * 1000 + 1
-        sessionManager.checkState(afterCooldown)
+        val afterCooldown = baseTime + 10 * 60 * 1000 + 60 * 60 * 1000 + 1
+        sessionManager.checkState(enabledApps, afterCooldown)
 
         assertNull(sessionManager.getSession(appA.id))
     }
@@ -105,8 +121,7 @@ class SessionManagerTest {
     fun `クールダウン中に対象アプリ検出してもCOOLDOWNのまま変わらない`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimit)
-        sessionManager.dismiss(appA, afterLimit)
+        sessionManager.checkState(enabledApps, afterLimit)
         val cooldownUntilBefore = sessionManager.getSession(appA.id)?.cooldownUntil
 
         val duringCooldown = afterLimit + 1000
@@ -115,22 +130,6 @@ class SessionManagerTest {
         val session = sessionManager.getSession(appA.id)
         assertEquals(SessionState.COOLDOWN, session?.state)
         assertEquals(cooldownUntilBefore, session?.cooldownUntil)
-    }
-
-    @Test
-    fun `COOLDOWNから延長でACTIVEに戻る`() {
-        sessionManager.onTargetAppDetected(appA, baseTime)
-        val afterLimit = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimit)
-        sessionManager.dismiss(appA, afterLimit)
-
-        val duringCooldown = afterLimit + 1000
-        sessionManager.extend(appA, duringCooldown)
-
-        val session = sessionManager.getSession(appA.id)
-        assertEquals(SessionState.ACTIVE, session?.state)
-        assertEquals(duringCooldown + 5 * 60 * 1000, session?.expiresAt)
-        assertNull(session?.cooldownUntil)
     }
 
     @Test
@@ -185,8 +184,7 @@ class SessionManagerTest {
     fun `AがCOOLDOWN中でもBは独立してACTIVEになる`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val afterLimitA = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterLimitA)
-        sessionManager.dismiss(appA, afterLimitA)
+        sessionManager.checkState(enabledApps, afterLimitA)
 
         val detectB = afterLimitA + 1000
         sessionManager.onTargetAppDetected(appB, detectB)
@@ -198,15 +196,15 @@ class SessionManagerTest {
     }
 
     @Test
-    fun `Bがフォアグラウンド中でもAの制限時間経過でAはWARNINGになる`() {
+    fun `Bがフォアグラウンド中でもAの制限時間経過でAはCOOLDOWNになる`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
         val switchToB = baseTime + 30 * 1000
         sessionManager.onTargetAppDetected(appB, switchToB)
 
         val afterA = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterA)
+        sessionManager.checkState(enabledApps, afterA)
 
-        assertEquals(SessionState.WARNING, sessionManager.getSession(appA.id)?.state)
+        assertEquals(SessionState.COOLDOWN, sessionManager.getSession(appA.id)?.state)
         assertEquals(SessionState.ACTIVE, sessionManager.getSession(appB.id)?.state)
     }
 
@@ -216,27 +214,51 @@ class SessionManagerTest {
         sessionManager.onTargetAppDetected(appB, baseTime)
 
         val afterA = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterA)
-        sessionManager.dismiss(appA, afterA)
+        sessionManager.checkState(enabledApps, afterA)
 
-        val afterCooldownA = afterA + 60 * 60 * 1000 + 1
-        sessionManager.checkState(afterCooldownA)
+        val afterCooldownA = baseTime + 10 * 60 * 1000 + 60 * 60 * 1000 + 1
+        sessionManager.checkState(enabledApps, afterCooldownA)
 
         assertNull(sessionManager.getSession(appA.id))
         assertNotNull(sessionManager.getSession(appB.id))
     }
 
     @Test
-    fun `片方のextendは他方のセッションに影響しない`() {
+    fun `COOLDOWN状態ではextendでACTIVEに戻る`() {
         sessionManager.onTargetAppDetected(appA, baseTime)
-        sessionManager.onTargetAppDetected(appB, baseTime)
-        val afterA = baseTime + 10 * 60 * 1000 + 1
-        sessionManager.checkState(afterA)
+        val afterLimit = baseTime + 10 * 60 * 1000 + 1
+        sessionManager.checkState(enabledApps, afterLimit)
 
-        sessionManager.extend(appA, afterA)
+        val duringCooldown = afterLimit + 1000
+        sessionManager.extend(appA, duringCooldown)
 
-        val sessionB = sessionManager.getSession(appB.id)
-        assertEquals(SessionState.ACTIVE, sessionB?.state)
-        assertEquals(baseTime + 15 * 60 * 1000, sessionB?.expiresAt)
+        val session = sessionManager.getSession(appA.id)
+        assertEquals(SessionState.ACTIVE, session?.state)
+        assertEquals(duringCooldown + 5 * 60 * 1000, session?.expiresAt)
+        assertNull(session?.cooldownUntil)
+    }
+
+    @Test
+    fun `ACTIVE状態ではextendは何もしない`() {
+        sessionManager.onTargetAppDetected(appA, baseTime)
+        val originalExpiresAt = sessionManager.getSession(appA.id)?.expiresAt
+
+        sessionManager.extend(appA, baseTime + 1000)
+
+        val session = sessionManager.getSession(appA.id)
+        assertEquals(SessionState.ACTIVE, session?.state)
+        assertEquals(originalExpiresAt, session?.expiresAt)
+        assertFalse(session?.isExtended == true)
+    }
+
+    @Test
+    fun `enabledAppsに含まれないセッションはACTIVEからCOOLDOWNに遷移しない`() {
+        sessionManager.onTargetAppDetected(appA, baseTime)
+        val afterLimit = baseTime + 10 * 60 * 1000 + 1
+
+        // appA is not in enabledApps (e.g., user disabled it)
+        sessionManager.checkState(listOf(appB), afterLimit)
+
+        assertEquals(SessionState.ACTIVE, sessionManager.getSession(appA.id)?.state)
     }
 }

@@ -15,19 +15,22 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import studio.hazeray.applimit.data.repository.fake.FakeTargetAppRepository
 import studio.hazeray.applimit.domain.model.TargetApp
+import studio.hazeray.applimit.service.SessionManager
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class MainViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private lateinit var repository: FakeTargetAppRepository
+    private lateinit var sessionManager: SessionManager
     private lateinit var viewModel: MainViewModel
 
     @BeforeEach
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         repository = FakeTargetAppRepository()
-        viewModel = MainViewModel(repository)
+        sessionManager = SessionManager()
+        viewModel = MainViewModel(repository, sessionManager)
     }
 
     @AfterEach
@@ -37,8 +40,8 @@ class MainViewModelTest {
 
     @Test
     fun `初期状態で対象アプリリストが空`() = runTest {
-        viewModel.targetApps.test {
-            assertEquals(emptyList<TargetApp>(), awaitItem())
+        viewModel.rows.test {
+            assertEquals(emptyList<TargetAppRowState>(), awaitItem())
         }
     }
 
@@ -47,11 +50,15 @@ class MainViewModelTest {
         val app = TargetApp(packageName = "com.instagram.android", appName = "Instagram")
         repository.addTargetApp(app)
 
-        testDispatcher.scheduler.advanceUntilIdle()
-
-        val list = viewModel.targetApps.value
-        assertEquals(1, list.size)
-        assertEquals("Instagram", list[0].appName)
+        viewModel.rows.test {
+            // initial empty
+            awaitItem()
+            // after repository emits and combine fires
+            val list = awaitItem()
+            assertEquals(1, list.size)
+            assertEquals("Instagram", list[0].app.appName)
+            assertEquals(SessionStatus.NotStarted, list[0].status)
+        }
     }
 
     @Test
@@ -62,9 +69,11 @@ class MainViewModelTest {
         viewModel.toggleEnabled(id)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.targetApps.test {
+        viewModel.rows.test {
+            // initial empty from stateIn, then combine fires with real data
+            skipItems(1)
             val list = awaitItem()
-            assertFalse(list[0].isEnabled)
+            assertFalse(list[0].app.isEnabled)
         }
     }
 
@@ -76,7 +85,8 @@ class MainViewModelTest {
         viewModel.removeApp(id)
         testDispatcher.scheduler.advanceUntilIdle()
 
-        viewModel.targetApps.test {
+        viewModel.rows.test {
+            // initial empty; after deletion combine also produces empty
             assertTrue(awaitItem().isEmpty())
         }
     }

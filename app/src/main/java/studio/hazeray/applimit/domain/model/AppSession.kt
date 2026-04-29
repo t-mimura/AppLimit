@@ -5,5 +5,6 @@ data class AppSession(
     val state: SessionState,
     val startedAt: Long,
     val expiresAt: Long,
-    val cooldownUntil: Long? = null
+    val cooldownUntil: Long? = null,
+    val isExtended: Boolean = false
 )

@@ -26,21 +26,6 @@ class OverlayControllerImpl @Inject constructor(
 
     private var overlayView: View? = null
 
-    override fun showWarningOverlay(
-        appName: String,
-        usedMinutes: Int,
-        onExtend: () -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        hideOverlay()
-        val message = context.getString(
-            R.string.warning_message,
-            appName,
-            usedMinutes
-        )
-        showOverlay(message, onExtend, onDismiss)
-    }
-
     override fun showCooldownOverlay(
         appName: String,
         remainingMinutes: Int,
@@ -72,8 +57,13 @@ class OverlayControllerImpl @Inject constructor(
     private fun showOverlay(message: String, onExtend: () -> Unit, onDismiss: () -> Unit) {
         val layout = buildOverlayLayout(message, onExtend, onDismiss)
         val params = buildLayoutParams()
-        windowManager.addView(layout, params)
-        overlayView = layout
+        try {
+            windowManager.addView(layout, params)
+            overlayView = layout
+        } catch (_: WindowManager.BadTokenException) {
+            // Overlay permission revoked at runtime
+            overlayView = null
+        }
     }
 
     private fun buildOverlayLayout(

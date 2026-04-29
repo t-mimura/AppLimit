@@ -90,8 +90,11 @@ class NotificationHelper @Inject constructor(
         notificationManager.notify(LIMIT_NOTIFICATION_ID, notification)
     }
 
-    fun cancelWarningNotifications() {
+    fun cancelWarningNotification() {
         notificationManager.cancel(WARNING_NOTIFICATION_ID)
+    }
+
+    fun cancelLimitReachedNotification() {
         notificationManager.cancel(LIMIT_NOTIFICATION_ID)
     }
 

@@ -11,7 +11,7 @@ class MonitorLoop @Inject constructor(
 ) {
     private var lastDetectedPackage: String? = null
 
-    fun tick(enabledApps: List<TargetApp>, currentTimeMillis: Long): TargetApp? {
+    fun tick(enabledApps: List<TargetApp>, currentTimeMillis: Long): MonitorTickResult {
         val foregroundPackage = usageStatsProvider.getCurrentForegroundPackage()
         val matchedApp = enabledApps.find { it.packageName == foregroundPackage }
 
@@ -23,7 +23,12 @@ class MonitorLoop @Inject constructor(
             lastDetectedPackage = null
         }
 
-        sessionManager.checkState(currentTimeMillis)
-        return matchedApp
+        sessionManager.checkState(enabledApps, currentTimeMillis)
+        return MonitorTickResult(foregroundPackage, matchedApp)
     }
 }
+
+data class MonitorTickResult(
+    val foregroundPackage: String?,
+    val matchedApp: TargetApp?
+)

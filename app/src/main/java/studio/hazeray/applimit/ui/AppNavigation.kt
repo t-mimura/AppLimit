@@ -9,9 +9,12 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import studio.hazeray.applimit.ui.appselect.AppSelectScreen
 import studio.hazeray.applimit.ui.appselect.AppSelectViewModel
+import studio.hazeray.applimit.ui.debug.DebugScreen
+import studio.hazeray.applimit.ui.debug.DebugViewModel
 import studio.hazeray.applimit.ui.main.MainScreen
 import studio.hazeray.applimit.ui.main.MainViewModel
 import studio.hazeray.applimit.ui.permission.PermissionScreen
+import studio.hazeray.applimit.ui.settings.AppSettingsScreen
 import studio.hazeray.applimit.ui.settings.SettingsScreen
 import studio.hazeray.applimit.ui.settings.SettingsViewModel
 
@@ -33,7 +36,23 @@ fun AppNavigation(navController: NavHostController) {
             MainScreen(
                 viewModel = viewModel,
                 onAddApp = { navController.navigate("app_select") },
-                onAppClick = { appId -> navController.navigate("settings/$appId") }
+                onAppClick = { appId -> navController.navigate("settings/$appId") },
+                onAppSettings = { navController.navigate("app_settings") }
+            )
+        }
+
+        composable("app_settings") {
+            AppSettingsScreen(
+                onBack = { navController.popBackStack() },
+                onDebug = { navController.navigate("debug") }
+            )
+        }
+
+        composable("debug") {
+            val viewModel = hiltViewModel<DebugViewModel>()
+            DebugScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() }
             )
         }
 

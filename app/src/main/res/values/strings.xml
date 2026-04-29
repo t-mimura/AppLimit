@@ -4,7 +4,12 @@
 
     <!-- Main Screen -->
     <string name="empty_list_message">制限対象のアプリがありません\n+ボタンから追加してください</string>
+    <string name="permission_warning_banner">権限が不足しているため監視できていません。タップして設定を開いてください。</string>
     <string name="limit_time_label">制限時間: %d分</string>
+    <string name="session_status_not_started">セッション未開始</string>
+    <string name="session_status_active">使用可能 / 残り %1$d分</string>
+    <string name="session_status_extended">延長中 / 残り %1$d分</string>
+    <string name="session_status_cooldown">クールダウン中 / 残り %1$d分</string>
 
     <!-- App Select Screen -->
     <string name="select_app_title">アプリを選択</string>
@@ -23,9 +28,25 @@
     <string name="permission_description">AppLimitが正しく動作するために、以下の権限を許可してください。</string>
     <string name="grant_usage_stats">使用状況へのアクセスを許可</string>
     <string name="grant_overlay">他のアプリの上に表示を許可</string>
+    <string name="grant_notifications">通知の表示を許可</string>
+    <string name="permission_grant_button">許可</string>
+    <string name="permission_done">完了</string>
+    <string name="hibernation_advice">[任意] 長期間アプリを開かないと、OSが監視を停止することがあります。設定の「使用していないアプリを管理する」をOFFにするとより安心です。</string>
+    <string name="open_hibernation_settings">アプリの自動管理設定を開く</string>
+
+    <!-- App Settings Screen -->
+    <string name="app_settings_title">設定</string>
+    <string name="app_settings_section_permissions">権限</string>
+    <string name="app_settings_section_other">その他</string>
+    <string name="app_settings_section_debug">デバッグ</string>
+    <string name="app_settings_open_debug">デバッグ画面を開く</string>
+    <string name="permission_label_usage_stats">使用状況へのアクセス</string>
+    <string name="permission_label_overlay">他のアプリの上に表示</string>
+    <string name="permission_label_notifications">通知の表示</string>
+    <string name="permission_status_granted">許可済み</string>
+    <string name="permission_status_denied">未許可</string>
 
     <!-- Overlay -->
-    <string name="warning_message">%1$sの制限時間に達しました\n使用時間: %2$d分</string>
     <string name="cooldown_message">%1$sはクールダウン中です\n残り: %2$d分</string>
     <string name="extend_button">延長する</string>
     <string name="dismiss_button">閉じる</string>

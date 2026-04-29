@@ -73,14 +73,14 @@ class MonitorLoopTest {
     }
 
     @Test
-    fun `制限時間超過後のtickでWARNINGになる`() {
+    fun `制限時間超過後のtickでCOOLDOWNになる`() {
         usageStatsProvider.foregroundPackage = "com.instagram.android"
         monitorLoop.tick(enabledApps, baseTime)
 
         val afterLimit = baseTime + 10 * 60 * 1000 + 1
         monitorLoop.tick(enabledApps, afterLimit)
 
-        assertEquals(SessionState.WARNING, sessionManager.getSession(instagram.id)?.state)
+        assertEquals(SessionState.COOLDOWN, sessionManager.getSession(instagram.id)?.state)
     }
 
     @Test
@@ -99,18 +99,20 @@ class MonitorLoopTest {
     fun `tickは対象アプリがフォアグラウンドなら対象TargetAppを返す`() {
         usageStatsProvider.foregroundPackage = "com.instagram.android"
 
-        val matched = monitorLoop.tick(enabledApps, baseTime)
+        val result = monitorLoop.tick(enabledApps, baseTime)
 
-        assertSame(instagram, matched)
+        assertSame(instagram, result.matchedApp)
+        assertEquals("com.instagram.android", result.foregroundPackage)
     }
 
     @Test
-    fun `tickは対象外アプリのときnullを返す`() {
+    fun `tickは対象外アプリのときmatchedAppがnullでforegroundは保持される`() {
         usageStatsProvider.foregroundPackage = "com.twitter.android"
 
-        val matched = monitorLoop.tick(enabledApps, baseTime)
+        val result = monitorLoop.tick(enabledApps, baseTime)
 
-        assertNull(matched)
+        assertNull(result.matchedApp)
+        assertEquals("com.twitter.android", result.foregroundPackage)
     }
 
     @Test
@@ -134,7 +136,6 @@ class MonitorLoopTest {
         monitorLoop.tick(enabledAppsBoth, baseTime)
         val afterA = baseTime + 10 * 60 * 1000 + 1
         monitorLoop.tick(enabledAppsBoth, afterA)
-        sessionManager.dismiss(instagram, afterA)
 
         usageStatsProvider.foregroundPackage = "com.twitter.android"
         val detectB = afterA + 1000

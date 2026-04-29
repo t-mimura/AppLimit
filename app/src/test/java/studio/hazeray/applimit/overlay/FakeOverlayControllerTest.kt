@@ -22,21 +22,15 @@ class FakeOverlayControllerTest {
     }
 
     @Test
-    fun `警告オーバーレイを表示すると表示状態になる`() {
-        controller.showWarningOverlay("Instagram", 10, {}, {})
+    fun `クールダウンオーバーレイを表示すると表示状態になる`() {
+        controller.showCooldownOverlay("Instagram", 30, {}, {})
         assertTrue(controller.isShowing())
         assertEquals("Instagram", controller.lastAppName)
     }
 
     @Test
-    fun `クールダウンオーバーレイを表示すると表示状態になる`() {
-        controller.showCooldownOverlay("Instagram", 30, {}, {})
-        assertTrue(controller.isShowing())
-    }
-
-    @Test
     fun `非表示にすると表示状態が解除される`() {
-        controller.showWarningOverlay("Instagram", 10, {}, {})
+        controller.showCooldownOverlay("Instagram", 30, {}, {})
         controller.hideOverlay()
         assertFalse(controller.isShowing())
     }
@@ -46,7 +40,7 @@ class FakeOverlayControllerTest {
         var extended = false
         var dismissed = false
 
-        controller.showWarningOverlay("Instagram", 10, { extended = true }, { dismissed = true })
+        controller.showCooldownOverlay("Instagram", 30, { extended = true }, { dismissed = true })
         controller.lastOnExtend?.invoke()
         controller.lastOnDismiss?.invoke()
 

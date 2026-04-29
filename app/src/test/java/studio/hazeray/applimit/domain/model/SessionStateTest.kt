@@ -7,7 +7,7 @@ class SessionStateTest {
     @Test
     fun `全ての状態が定義されている`() {
         val states = SessionState.entries
-        assertEquals(4, states.size)
+        assertEquals(3, states.size)
     }
 
     @Test
@@ -18,11 +18,6 @@ class SessionStateTest {
     @Test
     fun `ACTIVE状態が存在する`() {
         assertEquals("ACTIVE", SessionState.ACTIVE.name)
-    }
-
-    @Test
-    fun `WARNING状態が存在する`() {
-        assertEquals("WARNING", SessionState.WARNING.name)
     }
 
     @Test

@@ -33,7 +33,6 @@ class SessionManager @Inject constructor() {
                 )
             }
             SessionState.ACTIVE,
-            SessionState.WARNING,
             SessionState.COOLDOWN -> {
                 // Keep existing session for this app as-is
             }
@@ -46,32 +45,21 @@ class SessionManager @Inject constructor() {
 
     fun extend(targetApp: TargetApp, currentTimeMillis: Long) {
         val session = _sessions.value[targetApp.id] ?: return
-        if (session.state != SessionState.WARNING && session.state != SessionState.COOLDOWN) return
+        if (session.state != SessionState.COOLDOWN) return
 
         updateSession(
             targetApp.id,
             session.copy(
                 state = SessionState.ACTIVE,
                 expiresAt = currentTimeMillis + targetApp.extensionMinutes * 60 * 1000L,
-                cooldownUntil = null
+                cooldownUntil = null,
+                isExtended = true
             )
         )
     }
 
-    fun dismiss(targetApp: TargetApp, currentTimeMillis: Long) {
-        val session = _sessions.value[targetApp.id] ?: return
-        if (session.state != SessionState.WARNING) return
-
-        updateSession(
-            targetApp.id,
-            session.copy(
-                state = SessionState.COOLDOWN,
-                cooldownUntil = currentTimeMillis + targetApp.cooldownMinutes * 60 * 1000L
-            )
-        )
-    }
-
-    fun checkState(currentTimeMillis: Long) {
+    fun checkState(enabledApps: List<TargetApp>, currentTimeMillis: Long) {
+        val byId = enabledApps.associateBy { it.id }
         val current = _sessions.value
         var next: MutableMap<Long, AppSession>? = null
 
@@ -79,7 +67,13 @@ class SessionManager @Inject constructor() {
             when (session.state) {
                 SessionState.ACTIVE -> {
                     if (currentTimeMillis >= session.expiresAt) {
-                        val updated = session.copy(state = SessionState.WARNING)
+                        val app = byId[id] ?: continue
+                        val cooldownUntil =
+                            session.expiresAt + app.cooldownMinutes * 60 * 1000L
+                        val updated = session.copy(
+                            state = SessionState.COOLDOWN,
+                            cooldownUntil = cooldownUntil
+                        )
                         if (next == null) next = current.toMutableMap()
                         next[id] = updated
                     }
@@ -91,7 +85,7 @@ class SessionManager @Inject constructor() {
                         next.remove(id)
                     }
                 }
-                else -> { /* no automatic transition */ }
+                SessionState.IDLE -> { /* no automatic transition */ }
             }
         }
 

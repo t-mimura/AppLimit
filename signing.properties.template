@@ -1,0 +1,11 @@
+# Copy this file to `signing.properties` and fill in the actual values.
+# signing.properties is gitignored so secrets will NOT be committed.
+#
+# storeFile : keystore filename, resolved relative to the project root.
+# storePassword / keyPassword : the passwords you entered when running keytool.
+# keyAlias : the alias passed to keytool (-alias).
+
+storeFile=applimit.keystore
+storePassword=
+keyAlias=applimit
+keyPassword=

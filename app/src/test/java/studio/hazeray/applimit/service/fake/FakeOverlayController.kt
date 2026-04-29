@@ -15,18 +15,6 @@ class FakeOverlayController : OverlayController {
     var lastOnDismiss: (() -> Unit)? = null
         private set
 
-    override fun showWarningOverlay(
-        appName: String,
-        usedMinutes: Int,
-        onExtend: () -> Unit,
-        onDismiss: () -> Unit
-    ) {
-        showing = true
-        lastAppName = appName
-        lastOnExtend = onExtend
-        lastOnDismiss = onDismiss
-    }
-
     override fun showCooldownOverlay(
         appName: String,
         remainingMinutes: Int,
