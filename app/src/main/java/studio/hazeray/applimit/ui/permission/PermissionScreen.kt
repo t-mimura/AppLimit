@@ -1,12 +1,14 @@
 package studio.hazeray.applimit.ui.permission
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AppOpsManager
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
 import android.os.Process
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -51,6 +53,7 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
     var hasUsageStats by remember { mutableStateOf(hasUsageStatsPermission(context)) }
     var hasOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var hasNotification by remember { mutableStateOf(hasNotificationPermission(context)) }
+    var hasBatteryExempt by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
 
     val notificationLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestPermission()
@@ -64,13 +67,14 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
                 hasUsageStats = hasUsageStatsPermission(context)
                 hasOverlay = Settings.canDrawOverlays(context)
                 hasNotification = hasNotificationPermission(context)
+                hasBatteryExempt = isIgnoringBatteryOptimizations(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
     }
 
-    val allGranted = hasUsageStats && hasOverlay && hasNotification
+    val allGranted = hasUsageStats && hasOverlay && hasNotification && hasBatteryExempt
 
     Column(
         modifier = Modifier
@@ -115,6 +119,11 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
             onGrant = {
                 notificationLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
+        )
+        PermissionRow(
+            label = stringResource(R.string.permission_label_ignore_battery),
+            granted = hasBatteryExempt,
+            onGrant = { requestIgnoreBatteryOptimizations(context) }
         )
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -205,6 +214,27 @@ fun hasNotificationPermission(context: Context): Boolean {
         context,
         Manifest.permission.POST_NOTIFICATIONS
     ) == PackageManager.PERMISSION_GRANTED
+}
+
+fun isIgnoringBatteryOptimizations(context: Context): Boolean {
+    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    return pm.isIgnoringBatteryOptimizations(context.packageName)
+}
+
+fun hasAllRequiredPermissions(context: Context): Boolean = hasUsageStatsPermission(context) &&
+    Settings.canDrawOverlays(context) &&
+    hasNotificationPermission(context) &&
+    isIgnoringBatteryOptimizations(context)
+
+@SuppressLint("BatteryLife")
+fun requestIgnoreBatteryOptimizations(context: Context) {
+    val packageUri = Uri.parse("package:${context.packageName}")
+    val request = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, packageUri)
+    if (request.resolveActivity(context.packageManager) != null) {
+        context.startActivity(request)
+        return
+    }
+    context.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
 }
 
 fun hasUsageStatsPermission(context: Context): Boolean {

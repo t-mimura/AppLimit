@@ -44,7 +44,9 @@ import studio.hazeray.applimit.BuildConfig
 import studio.hazeray.applimit.R
 import studio.hazeray.applimit.ui.permission.hasNotificationPermission
 import studio.hazeray.applimit.ui.permission.hasUsageStatsPermission
+import studio.hazeray.applimit.ui.permission.isIgnoringBatteryOptimizations
 import studio.hazeray.applimit.ui.permission.openHibernationSettings
+import studio.hazeray.applimit.ui.permission.requestIgnoreBatteryOptimizations
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -55,6 +57,7 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
     var hasUsageStats by remember { mutableStateOf(hasUsageStatsPermission(context)) }
     var hasOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var hasNotification by remember { mutableStateOf(hasNotificationPermission(context)) }
+    var hasBatteryExempt by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -62,6 +65,7 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                 hasUsageStats = hasUsageStatsPermission(context)
                 hasOverlay = Settings.canDrawOverlays(context)
                 hasNotification = hasNotificationPermission(context)
+                hasBatteryExempt = isIgnoringBatteryOptimizations(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -111,6 +115,11 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                         .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
                     context.startActivity(intent)
                 }
+            )
+            PermissionRow(
+                label = stringResource(R.string.permission_label_ignore_battery),
+                granted = hasBatteryExempt,
+                onGrant = { requestIgnoreBatteryOptimizations(context) }
             )
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {

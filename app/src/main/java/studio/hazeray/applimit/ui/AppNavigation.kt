@@ -19,8 +19,8 @@ import studio.hazeray.applimit.ui.settings.SettingsScreen
 import studio.hazeray.applimit.ui.settings.SettingsViewModel
 
 @Composable
-fun AppNavigation(navController: NavHostController) {
-    NavHost(navController = navController, startDestination = "permission") {
+fun AppNavigation(navController: NavHostController, startDestination: String = "permission") {
+    NavHost(navController = navController, startDestination = startDestination) {
         composable("permission") {
             PermissionScreen(
                 onAllGranted = {

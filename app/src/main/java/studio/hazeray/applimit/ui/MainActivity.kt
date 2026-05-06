@@ -2,7 +2,6 @@ package studio.hazeray.applimit.ui
 
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -14,8 +13,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import studio.hazeray.applimit.service.MonitorService
 import studio.hazeray.applimit.service.NotificationHelper
-import studio.hazeray.applimit.ui.permission.hasNotificationPermission
-import studio.hazeray.applimit.ui.permission.hasUsageStatsPermission
+import studio.hazeray.applimit.ui.permission.hasAllRequiredPermissions
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -27,11 +25,16 @@ class MainActivity : ComponentActivity() {
 
         notificationHelper.createNotificationChannels()
 
+        val startDestination = if (hasAllRequiredPermissions(this)) "main" else "permission"
+
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+                    AppNavigation(
+                        navController = navController,
+                        startDestination = startDestination
+                    )
                 }
             }
         }
@@ -39,14 +42,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
-        if (hasAllRequiredPermissions()) {
+        if (hasAllRequiredPermissions(this)) {
             startMonitorService()
         }
     }
-
-    private fun hasAllRequiredPermissions(): Boolean = hasUsageStatsPermission(this) &&
-        Settings.canDrawOverlays(this) &&
-        hasNotificationPermission(this)
 
     private fun startMonitorService() {
         val intent = Intent(this, MonitorService::class.java)
