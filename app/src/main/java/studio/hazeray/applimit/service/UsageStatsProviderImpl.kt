@@ -16,10 +16,10 @@ class UsageStatsProviderImpl @Inject constructor(
 ) : UsageStatsProvider {
 
     private var lastQueryTime: Long = 0L
-    private val foregroundStack: ArrayDeque<String> = ArrayDeque()
+    private val activityOrder: ArrayDeque<Pair<String, String>> = ArrayDeque()
 
     @Suppress("DEPRECATION")
-    override fun getCurrentForegroundPackage(): String? {
+    override fun getCurrentForeground(): ForegroundActivity? {
         val usageStatsManager =
             context.getSystemService(Context.USAGE_STATS_SERVICE) as? UsageStatsManager
                 ?: return null
@@ -28,7 +28,7 @@ class UsageStatsProviderImpl @Inject constructor(
         val beginTime = if (lastQueryTime == 0L) endTime - INITIAL_LOOKBACK_MS else lastQueryTime
 
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "query stackBefore=$foregroundStack")
+            Log.d(TAG, "query orderBefore=$activityOrder")
         }
 
         val events = try {
@@ -44,41 +44,49 @@ class UsageStatsProviderImpl @Inject constructor(
         while (events.hasNextEvent()) {
             events.getNextEvent(event)
             val pkg = event.packageName ?: continue
+            val cls = event.className.orEmpty()
             when (event.eventType) {
                 UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                    pushForeground(pkg)
-                    logTransition("FG", pkg)
+                    onActivityResumed(pkg, cls)
+                    logTransition("FG", pkg, cls)
                 }
                 ACTIVITY_STOPPED -> {
-                    if (useActivityStopped && foregroundStack.remove(pkg)) {
-                        logTransition("STOPPED", pkg)
+                    if (useActivityStopped) {
+                        onActivityStopped(pkg, cls)
+                        logTransition("STOPPED", pkg, cls)
                     }
                 }
                 UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                    if (!useActivityStopped && foregroundStack.remove(pkg)) {
-                        logTransition("BG", pkg)
+                    if (!useActivityStopped) {
+                        onActivityStopped(pkg, cls)
+                        logTransition("BG", pkg, cls)
                     }
                 }
             }
         }
 
         lastQueryTime = endTime
-        val top = foregroundStack.lastOrNull()
+        val top = activityOrder.lastOrNull()
         if (BuildConfig.DEBUG) {
-            Log.d(TAG, "queryDone top=$top stackAfter=$foregroundStack")
+            Log.d(TAG, "queryDone top=$top orderAfter=$activityOrder")
         }
-        return top
+        return top?.let { ForegroundActivity(it.first, it.second) }
     }
 
-    private fun pushForeground(pkg: String) {
-        foregroundStack.remove(pkg)
-        foregroundStack.addLast(pkg)
-        while (foregroundStack.size > STACK_LIMIT) foregroundStack.removeFirst()
+    private fun onActivityResumed(pkg: String, cls: String) {
+        val key = pkg to cls
+        activityOrder.remove(key)
+        activityOrder.addLast(key)
+        while (activityOrder.size > STACK_LIMIT) activityOrder.removeFirst()
     }
 
-    private fun logTransition(kind: String, pkg: String) {
+    private fun onActivityStopped(pkg: String, cls: String) {
+        activityOrder.remove(pkg to cls)
+    }
+
+    private fun logTransition(kind: String, pkg: String, cls: String) {
         if (!BuildConfig.DEBUG) return
-        Log.d(TAG, "$kind pkg=$pkg stack=$foregroundStack")
+        Log.d(TAG, "$kind pkg=$pkg cls=$cls order=$activityOrder")
     }
 
     companion object {

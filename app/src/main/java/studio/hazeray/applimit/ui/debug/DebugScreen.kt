@@ -122,14 +122,19 @@ private val timeFormat = SimpleDateFormat("HH:mm:ss", Locale.JAPAN)
 
 private fun formatEntry(entry: DebugTickRecord): String {
     val time = timeFormat.format(Date(entry.timestamp))
-    val fg = entry.foregroundPackage ?: "(null)"
+    val pkg = entry.foregroundPackage ?: "(null)"
+    val cls = entry.foregroundClassName
+        ?.takeIf { it.isNotEmpty() }
+        ?.substringAfterLast('.')
+        ?.let { "/$it" }
+        .orEmpty()
     val targetMark = if (entry.isTarget) "○${entry.targetAppName ?: "?"}" else "✗"
     val sessionPart = entry.sessionState?.let {
         val remaining = entry.remainingMs?.let { ms -> formatRemaining(ms) } ?: "-"
         val ext = if (entry.isExtended) "+" else ""
         " | $it$ext $remaining"
     } ?: ""
-    return "$time | fg=$fg | $targetMark$sessionPart"
+    return "$time | fg=$pkg$cls | $targetMark$sessionPart"
 }
 
 private fun formatRemaining(ms: Long): String {

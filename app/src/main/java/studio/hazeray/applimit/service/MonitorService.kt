@@ -109,6 +109,7 @@ class MonitorService : LifecycleService() {
                 if (BuildConfig.DEBUG) {
                     recordDebugTick(
                         tickResult.foregroundPackage,
+                        tickResult.foregroundClassName,
                         tickResult.matchedApp,
                         currentTime
                     )
@@ -145,6 +146,7 @@ class MonitorService : LifecycleService() {
 
     private fun recordDebugTick(
         foregroundPackage: String?,
+        foregroundClassName: String?,
         matchedApp: TargetApp?,
         currentTime: Long
     ) {
@@ -154,6 +156,7 @@ class MonitorService : LifecycleService() {
             DebugTickRecord(
                 timestamp = currentTime,
                 foregroundPackage = foregroundPackage,
+                foregroundClassName = foregroundClassName,
                 isTarget = matchedApp != null,
                 targetAppName = matchedApp?.appName,
                 sessionState = session?.state?.name,
