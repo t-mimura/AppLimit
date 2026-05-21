@@ -102,3 +102,7 @@ app/src/main/java/studio/hazeray/applimit/
 - [docs/CODING_RULES.md](docs/CODING_RULES.md) — コーディング規約
 - [docs/TEST_POLICY.md](docs/TEST_POLICY.md) — テスト方針
 - [CLAUDE.md](CLAUDE.md) — Claude Code 向けプロジェクトガイド
+
+## ライセンス
+
+[MIT License](LICENSE)
