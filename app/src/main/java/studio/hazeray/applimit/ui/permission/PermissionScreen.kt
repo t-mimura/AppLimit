@@ -99,6 +99,24 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
+        if (mayNeedRestrictedSettingsGrant(context) && (!hasUsageStats || !hasOverlay)) {
+            Text(
+                text = stringResource(R.string.restricted_settings_notice),
+                style = MaterialTheme.typography.bodySmall,
+                textAlign = TextAlign.Center
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            OutlinedButton(
+                onClick = { openApplicationDetailsSettings(context) },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(stringResource(R.string.restricted_settings_open_app_info))
+            }
+            Spacer(modifier = Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
         PermissionRow(
             label = stringResource(R.string.permission_label_usage_stats),
             granted = hasUsageStats,
@@ -207,6 +225,32 @@ fun openHibernationSettings(context: Context) {
         )
     }
 }
+
+fun openApplicationDetailsSettings(context: Context) {
+    val packageUri = Uri.parse("package:${context.packageName}")
+    context.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, packageUri))
+}
+
+fun isSideloaded(context: Context): Boolean {
+    val installer = try {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            context.packageManager
+                .getInstallSourceInfo(context.packageName)
+                .installingPackageName
+        } else {
+            @Suppress("DEPRECATION")
+            context.packageManager.getInstallerPackageName(context.packageName)
+        }
+    } catch (_: PackageManager.NameNotFoundException) {
+        null
+    }
+    return installer != PLAY_STORE_PACKAGE
+}
+
+fun mayNeedRestrictedSettingsGrant(context: Context): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && isSideloaded(context)
+
+private const val PLAY_STORE_PACKAGE = "com.android.vending"
 
 fun hasNotificationPermission(context: Context): Boolean {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return true
