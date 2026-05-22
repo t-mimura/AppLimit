@@ -17,3 +17,6 @@ app/release/
 *.jks
 *.keystore
 signing.properties
+
+# Claude Code local state
+.claude/
