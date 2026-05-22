@@ -42,16 +42,19 @@ import studio.hazeray.applimit.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(viewModel: SettingsViewModel, onDeleted: () -> Unit) {
-    val targetApp by viewModel.targetApp.collectAsState()
+fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted: () -> Unit) {
     val draft by viewModel.draft.collectAsState()
     val deleted by viewModel.deleted.collectAsState()
+    val saved by viewModel.saved.collectAsState()
 
     LaunchedEffect(deleted) {
         if (deleted) onDeleted()
     }
+    LaunchedEffect(saved) {
+        if (saved) onSaved()
+    }
 
-    val app = draft ?: targetApp ?: return
+    val app = draft ?: return
     var showDeleteConfirm by remember { mutableStateOf(false) }
 
     Scaffold(
@@ -189,16 +192,10 @@ private fun AppIconHeader(packageName: String, appName: String) {
             Spacer(modifier = Modifier.size(48.dp))
         }
         Spacer(modifier = Modifier.width(16.dp))
-        Column {
-            Text(
-                text = appName,
-                style = MaterialTheme.typography.titleMedium
-            )
-            Text(
-                text = packageName,
-                style = MaterialTheme.typography.bodySmall
-            )
-        }
+        Text(
+            text = appName,
+            style = MaterialTheme.typography.titleMedium
+        )
     }
 }
 

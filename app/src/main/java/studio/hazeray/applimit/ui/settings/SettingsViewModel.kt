@@ -35,6 +35,9 @@ class SettingsViewModel @AssistedInject constructor(
     private val _deleted = MutableStateFlow(false)
     val deleted: StateFlow<Boolean> = _deleted.asStateFlow()
 
+    private val _saved = MutableStateFlow(false)
+    val saved: StateFlow<Boolean> = _saved.asStateFlow()
+
     init {
         loadApp()
     }
@@ -68,6 +71,7 @@ class SettingsViewModel @AssistedInject constructor(
             val draftApp = _draft.value ?: return@launch
             repository.updateTargetApp(draftApp)
             _targetApp.value = draftApp
+            _saved.value = true
         }
     }
 
