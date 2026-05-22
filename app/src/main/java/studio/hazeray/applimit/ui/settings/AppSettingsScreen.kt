@@ -45,6 +45,8 @@ import studio.hazeray.applimit.R
 import studio.hazeray.applimit.ui.permission.hasNotificationPermission
 import studio.hazeray.applimit.ui.permission.hasUsageStatsPermission
 import studio.hazeray.applimit.ui.permission.isIgnoringBatteryOptimizations
+import studio.hazeray.applimit.ui.permission.mayNeedRestrictedSettingsGrant
+import studio.hazeray.applimit.ui.permission.openApplicationDetailsSettings
 import studio.hazeray.applimit.ui.permission.openHibernationSettings
 import studio.hazeray.applimit.ui.permission.requestIgnoreBatteryOptimizations
 
@@ -92,6 +94,21 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                 .padding(horizontal = 16.dp, vertical = 8.dp)
         ) {
             SectionHeader(stringResource(R.string.app_settings_section_permissions))
+
+            if (mayNeedRestrictedSettingsGrant(context) && !hasUsageStats && !hasOverlay) {
+                Text(
+                    text = stringResource(R.string.restricted_settings_notice),
+                    style = MaterialTheme.typography.bodySmall
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { openApplicationDetailsSettings(context) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.restricted_settings_open_app_info))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+            }
 
             PermissionRow(
                 label = stringResource(R.string.permission_label_usage_stats),
