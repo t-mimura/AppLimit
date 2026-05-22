@@ -14,6 +14,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import studio.hazeray.applimit.BuildConfig
 import studio.hazeray.applimit.data.repository.TargetAppRepository
+import studio.hazeray.applimit.data.update.UpdateRepository
+import studio.hazeray.applimit.data.update.UpdateSettings
+import studio.hazeray.applimit.data.update.UpdateState
 import studio.hazeray.applimit.debug.DebugLogStore
 import studio.hazeray.applimit.debug.DebugSettings
 import studio.hazeray.applimit.debug.DebugTickRecord
@@ -45,6 +48,10 @@ class MonitorService : LifecycleService() {
 
     @Inject lateinit var debugSettings: DebugSettings
 
+    @Inject lateinit var updateRepository: UpdateRepository
+
+    @Inject lateinit var updateSettings: UpdateSettings
+
     private var isMonitoring = false
     private var warningNotifiedAppIds: Set<Long> = emptySet()
     private var cooldownNotifiedAppIds: Set<Long> = emptySet()
@@ -75,6 +82,7 @@ class MonitorService : LifecycleService() {
         if (!isMonitoring) {
             isMonitoring = true
             startMonitoringLoop()
+            observeUpdateState()
         }
 
         return START_STICKY
@@ -106,6 +114,7 @@ class MonitorService : LifecycleService() {
 
                 pruneStaleNotifiedIds()
                 handleSessionState(tickResult.matchedApp, currentTime)
+                maybeCheckForUpdate(currentTime)
                 if (BuildConfig.DEBUG) {
                     recordDebugTick(
                         tickResult.foregroundPackage,
@@ -121,6 +130,26 @@ class MonitorService : LifecycleService() {
                 }
 
                 delay(POLLING_INTERVAL_MS)
+            }
+        }
+    }
+
+    private suspend fun maybeCheckForUpdate(currentTime: Long) {
+        if (!updateSettings.autoUpdateEnabled.value) return
+        val lastChecked = updateSettings.lastCheckedAt.value
+        if (currentTime - lastChecked < UPDATE_CHECK_INTERVAL_MS) return
+        val result = updateRepository.checkForUpdate(currentTime)
+        if (result is UpdateState.UpdateAvailable) {
+            updateRepository.startDownload()
+        }
+    }
+
+    private fun observeUpdateState() {
+        lifecycleScope.launch {
+            updateRepository.state.collect { state ->
+                if (state is UpdateState.ReadyToInstall) {
+                    notificationHelper.showUpdateReadyNotification(state.version, state.apkUri)
+                }
             }
         }
     }
@@ -322,5 +351,6 @@ class MonitorService : LifecycleService() {
     companion object {
         private const val TAG = "AppLimitMonitor"
         private const val POLLING_INTERVAL_MS = 3_000L
+        private const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1_000L
     }
 }

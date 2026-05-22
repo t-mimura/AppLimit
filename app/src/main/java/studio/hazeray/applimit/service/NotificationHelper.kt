@@ -3,7 +3,10 @@ package studio.hazeray.applimit.service
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import androidx.core.app.NotificationCompat
 import dagger.hilt.android.qualifiers.ApplicationContext
@@ -36,8 +39,17 @@ class NotificationHelper @Inject constructor(
                 description = context.getString(R.string.warning_channel_desc)
             }
 
+            val updateChannel = NotificationChannel(
+                UPDATE_CHANNEL_ID,
+                context.getString(R.string.update_channel_name),
+                NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = context.getString(R.string.update_channel_desc)
+            }
+
             notificationManager.createNotificationChannel(monitorChannel)
             notificationManager.createNotificationChannel(warningChannel)
+            notificationManager.createNotificationChannel(updateChannel)
         }
     }
 
@@ -98,11 +110,39 @@ class NotificationHelper @Inject constructor(
         notificationManager.cancel(LIMIT_NOTIFICATION_ID)
     }
 
+    fun showUpdateReadyNotification(version: String, apkUri: Uri) {
+        val installIntent = Intent(Intent.ACTION_VIEW).apply {
+            setDataAndType(apkUri, "application/vnd.android.package-archive")
+            flags = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK
+        }
+        val pendingIntent = PendingIntent.getActivity(
+            context,
+            0,
+            installIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        val notification = NotificationCompat.Builder(context, UPDATE_CHANNEL_ID)
+            .setSmallIcon(android.R.drawable.stat_sys_download_done)
+            .setContentTitle(context.getString(R.string.update_ready_title))
+            .setContentText(context.getString(R.string.update_ready_text, version))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setAutoCancel(true)
+            .setContentIntent(pendingIntent)
+            .build()
+        notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
+    }
+
+    fun cancelUpdateReadyNotification() {
+        notificationManager.cancel(UPDATE_NOTIFICATION_ID)
+    }
+
     companion object {
         const val MONITOR_CHANNEL_ID = "monitor_service"
         const val WARNING_CHANNEL_ID = "warning"
+        const val UPDATE_CHANNEL_ID = "update"
         const val MONITOR_NOTIFICATION_ID = 1
         const val WARNING_NOTIFICATION_ID = 2
         const val LIMIT_NOTIFICATION_ID = 3
+        const val UPDATE_NOTIFICATION_ID = 4
     }
 }
