@@ -22,19 +22,27 @@ android {
         applicationId = "studio.hazeray.applimit"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = (System.getenv("APP_VERSION_CODE") ?: "1").toInt()
+        versionName = System.getenv("APP_VERSION_NAME") ?: "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         create("release") {
-            signingProps.getProperty("storeFile")?.let { path ->
-                storeFile = rootProject.file(path)
-                storePassword = signingProps.getProperty("storePassword")
-                keyAlias = signingProps.getProperty("keyAlias")
-                keyPassword = signingProps.getProperty("keyPassword")
+            val envStoreFile = System.getenv("RELEASE_STORE_FILE")
+            if (envStoreFile != null) {
+                storeFile = rootProject.file(envStoreFile)
+                storePassword = System.getenv("RELEASE_STORE_PASSWORD")
+                keyAlias = System.getenv("RELEASE_KEY_ALIAS")
+                keyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+            } else {
+                signingProps.getProperty("storeFile")?.let { path ->
+                    storeFile = rootProject.file(path)
+                    storePassword = signingProps.getProperty("storePassword")
+                    keyAlias = signingProps.getProperty("keyAlias")
+                    keyPassword = signingProps.getProperty("keyPassword")
+                }
             }
         }
     }
@@ -46,7 +54,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            if (signingPropsFile.exists()) {
+            if (System.getenv("RELEASE_STORE_FILE") != null || signingPropsFile.exists()) {
                 signingConfig = signingConfigs.getByName("release")
             }
         }
