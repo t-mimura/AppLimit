@@ -139,6 +139,11 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                 onGrant = { requestIgnoreBatteryOptimizations(context) }
             )
 
+            Spacer(modifier = Modifier.height(16.dp))
+            HorizontalDivider()
+            SectionHeader(stringResource(R.string.update_section_title))
+            UpdateSection()
+
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
                 Spacer(modifier = Modifier.height(16.dp))
                 HorizontalDivider()

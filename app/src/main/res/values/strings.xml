@@ -59,6 +59,8 @@
     <string name="monitor_channel_desc">アプリ使用時間の監視中に表示される通知</string>
     <string name="warning_channel_name">使用時間警告</string>
     <string name="warning_channel_desc">制限時間が近づいた時の警告通知</string>
+    <string name="update_channel_name">アプリ更新</string>
+    <string name="update_channel_desc">新しいバージョンが利用可能になった時の通知</string>
 
     <!-- Notifications -->
     <string name="monitor_notification_title">AppLimit 監視中</string>
@@ -67,4 +69,24 @@
     <string name="warning_notification_text">%1$sの制限時間まで残り%2$d分です</string>
     <string name="limit_reached_title">制限時間到達</string>
     <string name="limit_reached_text">%1$sの制限時間に達しました</string>
+    <string name="update_ready_title">アプリの更新準備が完了しました</string>
+    <string name="update_ready_text">新しいバージョン v%1$s をインストールできます</string>
+
+    <!-- Update Section -->
+    <string name="update_section_title">アプリ更新</string>
+    <string name="update_current_version">現在のバージョン: v%1$s</string>
+    <string name="update_auto_update_label">自動更新</string>
+    <string name="update_auto_update_desc">1日に1回新しいバージョンを確認し、見つかった場合は自動でダウンロードします</string>
+    <string name="update_check_now">今すぐ確認</string>
+    <string name="update_status_idle">未確認</string>
+    <string name="update_status_checking">確認中…</string>
+    <string name="update_status_up_to_date">最新です</string>
+    <string name="update_status_available">新しいバージョン v%1$s が利用可能です</string>
+    <string name="update_status_downloading">v%1$s をダウンロード中…</string>
+    <string name="update_status_ready">v%1$s のインストール準備が完了しました</string>
+    <string name="update_status_error">更新確認エラー: %1$s</string>
+    <string name="update_download_now">ダウンロード</string>
+    <string name="update_install_now">インストール</string>
+    <string name="update_last_checked">最終チェック: %1$s</string>
+    <string name="update_last_checked_never">なし</string>
 </resources>
