@@ -19,6 +19,7 @@ class GitHubReleaseApi @Inject constructor() {
             connection.requestMethod = "GET"
             connection.setRequestProperty("Accept", "application/vnd.github+json")
             connection.setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
+            connection.setRequestProperty("User-Agent", "AppLimit-Android")
             connection.connectTimeout = 10_000
             connection.readTimeout = 15_000
 

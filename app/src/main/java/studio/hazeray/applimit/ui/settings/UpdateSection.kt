@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -96,7 +97,7 @@ private fun UpdateStatusRow(state: UpdateState) {
             CircularProgressIndicator(
                 modifier = Modifier
                     .padding(end = 8.dp)
-                    .height(16.dp),
+                    .size(16.dp),
                 strokeWidth = 2.dp
             )
         }

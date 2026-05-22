@@ -42,7 +42,7 @@ class NotificationHelper @Inject constructor(
             val updateChannel = NotificationChannel(
                 UPDATE_CHANNEL_ID,
                 context.getString(R.string.update_channel_name),
-                NotificationManager.IMPORTANCE_DEFAULT
+                NotificationManager.IMPORTANCE_LOW
             ).apply {
                 description = context.getString(R.string.update_channel_desc)
             }
@@ -125,7 +125,7 @@ class NotificationHelper @Inject constructor(
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle(context.getString(R.string.update_ready_title))
             .setContentText(context.getString(R.string.update_ready_text, version))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
