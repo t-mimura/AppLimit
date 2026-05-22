@@ -24,8 +24,13 @@ class SettingsViewModel @AssistedInject constructor(
         fun create(appId: Long): SettingsViewModel
     }
 
+    // Persisted snapshot — only updated after save/delete completes.
     private val _targetApp = MutableStateFlow<TargetApp?>(null)
     val targetApp: StateFlow<TargetApp?> = _targetApp.asStateFlow()
+
+    // Edits land in the draft; nothing is written until save() is called.
+    private val _draft = MutableStateFlow<TargetApp?>(null)
+    val draft: StateFlow<TargetApp?> = _draft.asStateFlow()
 
     private val _deleted = MutableStateFlow(false)
     val deleted: StateFlow<Boolean> = _deleted.asStateFlow()
@@ -36,24 +41,34 @@ class SettingsViewModel @AssistedInject constructor(
 
     private fun loadApp() {
         viewModelScope.launch {
-            _targetApp.value = repository.getTargetAppById(appId)
+            val loaded = repository.getTargetAppById(appId)
+            _targetApp.value = loaded
+            _draft.value = loaded
         }
     }
 
     fun updateLimitMinutes(minutes: Int) {
-        updateApp { it.copy(limitMinutes = minutes) }
+        updateDraft { it.copy(limitMinutes = minutes) }
     }
 
     fun updateCooldownMinutes(minutes: Int) {
-        updateApp { it.copy(cooldownMinutes = minutes) }
+        updateDraft { it.copy(cooldownMinutes = minutes) }
     }
 
     fun updateExtensionMinutes(minutes: Int) {
-        updateApp { it.copy(extensionMinutes = minutes) }
+        updateDraft { it.copy(extensionMinutes = minutes) }
     }
 
     fun toggleEnabled() {
-        updateApp { it.copy(isEnabled = !it.isEnabled) }
+        updateDraft { it.copy(isEnabled = !it.isEnabled) }
+    }
+
+    fun save() {
+        viewModelScope.launch {
+            val draftApp = _draft.value ?: return@launch
+            repository.updateTargetApp(draftApp)
+            _targetApp.value = draftApp
+        }
     }
 
     fun deleteApp() {
@@ -64,12 +79,8 @@ class SettingsViewModel @AssistedInject constructor(
         }
     }
 
-    private fun updateApp(transform: (TargetApp) -> TargetApp) {
-        viewModelScope.launch {
-            val current = _targetApp.value ?: return@launch
-            val updated = transform(current)
-            repository.updateTargetApp(updated)
-            _targetApp.value = updated
-        }
+    private fun updateDraft(transform: (TargetApp) -> TargetApp) {
+        val current = _draft.value ?: return
+        _draft.value = transform(current)
     }
 }

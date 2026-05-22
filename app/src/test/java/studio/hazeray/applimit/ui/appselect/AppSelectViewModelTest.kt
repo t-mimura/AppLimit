@@ -72,4 +72,13 @@ class AppSelectViewModelTest {
         assertTrue(added != null)
         assertEquals("Instagram", added?.appName)
     }
+
+    @Test
+    fun `新規追加時の制限時間は10分`() = runTest {
+        viewModel.selectApp(fakeInstalledApps[0])
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        val added = repository.getTargetAppByPackageName("com.instagram.android")
+        assertEquals(10, added?.limitMinutes)
+    }
 }

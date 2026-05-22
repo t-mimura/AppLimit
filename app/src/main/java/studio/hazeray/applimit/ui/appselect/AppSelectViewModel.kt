@@ -75,7 +75,8 @@ class AppSelectViewModel @Inject constructor(
             val newId = repository.addTargetApp(
                 TargetApp(
                     packageName = installedApp.packageName,
-                    appName = installedApp.appName
+                    appName = installedApp.appName,
+                    limitMinutes = DEFAULT_NEW_APP_LIMIT_MINUTES
                 )
             )
             _addedAppId.value = newId
@@ -88,5 +89,9 @@ class AppSelectViewModel @Inject constructor(
 
     fun resetDuplicateSelected() {
         _duplicateSelected.value = false
+    }
+
+    companion object {
+        private const val DEFAULT_NEW_APP_LIMIT_MINUTES = 10
     }
 }
