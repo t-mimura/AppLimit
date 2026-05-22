@@ -60,7 +60,11 @@ fun AppNavigation(navController: NavHostController, startDestination: String = "
             val viewModel = hiltViewModel<AppSelectViewModel>()
             AppSelectScreen(
                 viewModel = viewModel,
-                onAppAdded = { navController.popBackStack() }
+                onAppAdded = { appId ->
+                    navController.navigate("settings/$appId") {
+                        popUpTo("app_select") { inclusive = true }
+                    }
+                }
             )
         }
 

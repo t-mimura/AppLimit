@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import studio.hazeray.applimit.data.repository.TargetAppRepository
@@ -26,8 +27,16 @@ class AppSelectViewModel @Inject constructor(
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
-    private val _appAdded = MutableStateFlow(false)
-    val appAdded: StateFlow<Boolean> = _appAdded.asStateFlow()
+    private val _addedAppId = MutableStateFlow<Long?>(null)
+    val addedAppId: StateFlow<Long?> = _addedAppId.asStateFlow()
+
+    private val _duplicateSelected = MutableStateFlow(false)
+    val duplicateSelected: StateFlow<Boolean> = _duplicateSelected.asStateFlow()
+
+    val addedPackages: StateFlow<Set<String>> =
+        repository.getAllTargetApps()
+            .map { apps -> apps.map { it.packageName }.toSet() }
+            .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
 
     val filteredApps: StateFlow<List<InstalledApp>> =
         combine(_installedApps, _searchQuery) { apps, query ->
@@ -58,19 +67,26 @@ class AppSelectViewModel @Inject constructor(
     fun selectApp(installedApp: InstalledApp) {
         viewModelScope.launch {
             val existing = repository.getTargetAppByPackageName(installedApp.packageName)
-            if (existing != null) return@launch
+            if (existing != null) {
+                _duplicateSelected.value = true
+                return@launch
+            }
 
-            repository.addTargetApp(
+            val newId = repository.addTargetApp(
                 TargetApp(
                     packageName = installedApp.packageName,
                     appName = installedApp.appName
                 )
             )
-            _appAdded.value = true
+            _addedAppId.value = newId
         }
     }
 
-    fun resetAppAdded() {
-        _appAdded.value = false
+    fun resetAddedAppId() {
+        _addedAppId.value = null
+    }
+
+    fun resetDuplicateSelected() {
+        _duplicateSelected.value = false
     }
 }
