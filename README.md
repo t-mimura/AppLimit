@@ -48,9 +48,9 @@
 
 [GitHub Releases](https://github.com/t-mimura/AppLimit/releases) から `AppLimit-vX.Y.Z.apk` をダウンロードして、端末にコピーまたは直接DLしてインストールする。
 
-### Android 14 以降のサイドロード時の追加手順
+### Android 14 以降にブラウザ等から直接インストールした場合の追加手順
 
-ブラウザ等から直接インストールした場合、Android 14 以降の **制限付き設定**（Restricted Settings）機能により、`使用状況へのアクセス`・`他のアプリの上に表示` の権限を直接許可できないことがある。
+Android 14 以降の **制限付き設定**（Restricted Settings）機能により、ブラウザ等から直接インストールしたアプリは `使用状況へのアクセス`・`他のアプリの上に表示` の権限を直接許可できないことがある。
 
 その場合は：
 
