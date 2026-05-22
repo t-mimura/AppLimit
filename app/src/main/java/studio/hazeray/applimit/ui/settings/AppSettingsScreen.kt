@@ -117,7 +117,7 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                 modifier = Modifier
                     .fillMaxSize()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 16.dp, vertical = 8.dp)
+                    .padding(horizontal = 24.dp, vertical = 16.dp)
             ) {
                 when (tabs.getOrNull(selectedTab)) {
                     stringResource(
