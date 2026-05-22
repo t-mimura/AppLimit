@@ -250,11 +250,6 @@ fun isSideloaded(context: Context): Boolean {
 fun mayNeedRestrictedSettingsGrant(context: Context): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && isSideloaded(context)
 
-fun isRestrictedSettingsLikelyAllowed(context: Context): Boolean {
-    if (!mayNeedRestrictedSettingsGrant(context)) return true
-    return hasUsageStatsPermission(context) || Settings.canDrawOverlays(context)
-}
-
 private const val PLAY_STORE_PACKAGE = "com.android.vending"
 
 fun hasNotificationPermission(context: Context): Boolean {

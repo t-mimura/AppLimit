@@ -45,7 +45,6 @@ import studio.hazeray.applimit.R
 import studio.hazeray.applimit.ui.permission.hasNotificationPermission
 import studio.hazeray.applimit.ui.permission.hasUsageStatsPermission
 import studio.hazeray.applimit.ui.permission.isIgnoringBatteryOptimizations
-import studio.hazeray.applimit.ui.permission.isRestrictedSettingsLikelyAllowed
 import studio.hazeray.applimit.ui.permission.mayNeedRestrictedSettingsGrant
 import studio.hazeray.applimit.ui.permission.openApplicationDetailsSettings
 import studio.hazeray.applimit.ui.permission.openHibernationSettings
@@ -61,7 +60,6 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
     var hasOverlay by remember { mutableStateOf(Settings.canDrawOverlays(context)) }
     var hasNotification by remember { mutableStateOf(hasNotificationPermission(context)) }
     var hasBatteryExempt by remember { mutableStateOf(isIgnoringBatteryOptimizations(context)) }
-    var restrictedAllowed by remember { mutableStateOf(isRestrictedSettingsLikelyAllowed(context)) }
 
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
@@ -70,7 +68,6 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
                 hasOverlay = Settings.canDrawOverlays(context)
                 hasNotification = hasNotificationPermission(context)
                 hasBatteryExempt = isIgnoringBatteryOptimizations(context)
-                restrictedAllowed = isRestrictedSettingsLikelyAllowed(context)
             }
         }
         lifecycleOwner.lifecycle.addObserver(observer)
@@ -98,14 +95,19 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
         ) {
             SectionHeader(stringResource(R.string.app_settings_section_permissions))
 
-            if (mayNeedRestrictedSettingsGrant(context)) {
-                PermissionRow(
-                    label = stringResource(R.string.permission_label_restricted_settings),
-                    granted = restrictedAllowed,
-                    onGrant = { openApplicationDetailsSettings(context) },
-                    grantButtonLabel = stringResource(R.string.restricted_settings_open_app_info),
-                    grantedStatusLabel = stringResource(R.string.restricted_settings_status_allowed)
+            if (mayNeedRestrictedSettingsGrant(context) && !hasUsageStats && !hasOverlay) {
+                Text(
+                    text = stringResource(R.string.restricted_settings_notice),
+                    style = MaterialTheme.typography.bodySmall
                 )
+                Spacer(modifier = Modifier.height(8.dp))
+                OutlinedButton(
+                    onClick = { openApplicationDetailsSettings(context) },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(stringResource(R.string.restricted_settings_open_app_info))
+                }
+                Spacer(modifier = Modifier.height(8.dp))
             }
 
             PermissionRow(
@@ -181,13 +183,7 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun PermissionRow(
-    label: String,
-    granted: Boolean,
-    onGrant: () -> Unit,
-    grantButtonLabel: String = stringResource(R.string.permission_grant_button),
-    grantedStatusLabel: String = stringResource(R.string.permission_status_granted)
-) {
+private fun PermissionRow(label: String, granted: Boolean, onGrant: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -210,12 +206,12 @@ private fun PermissionRow(
         }
         if (granted) {
             Text(
-                text = grantedStatusLabel,
+                text = stringResource(R.string.permission_status_granted),
                 style = MaterialTheme.typography.bodySmall
             )
         } else {
             Button(onClick = onGrant) {
-                Text(grantButtonLabel)
+                Text(stringResource(R.string.permission_grant_button))
             }
         }
     }
