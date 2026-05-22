@@ -33,8 +33,10 @@
     <string name="permission_done">完了</string>
     <string name="hibernation_advice">[任意] 長期間アプリを開かないと、OSが監視を停止することがあります。設定の「使用していないアプリを管理する」をOFFにするとより安心です。</string>
     <string name="open_hibernation_settings">アプリの自動管理設定を開く</string>
-    <string name="restricted_settings_notice">Android 14以降は、サイドロード版アプリの「使用状況へのアクセス」「他のアプリの上に表示」を直接許可できない場合があります。下の権限が許可できない場合は、アプリ情報の右上 ⋮ メニューから「制限付きの設定を許可」を有効にしてから再度お試しください。</string>
+    <string name="restricted_settings_notice">Android 14以降は、ブラウザ等から直接インストールすると「使用状況へのアクセス」「他のアプリの上に表示」を許可できない場合があります。その場合は、アプリ情報の右上 ⋮ メニューから「制限付きの設定を許可」を有効にしてから再度お試しください。</string>
     <string name="restricted_settings_open_app_info">アプリ情報を開く</string>
+    <string name="permission_label_restricted_settings">制限付き設定の許可</string>
+    <string name="restricted_settings_status_allowed">有効化済</string>
 
     <!-- App Settings Screen -->
     <string name="app_settings_title">設定</string>

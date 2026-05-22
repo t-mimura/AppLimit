@@ -99,7 +99,7 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (mayNeedRestrictedSettingsGrant(context) && (!hasUsageStats || !hasOverlay)) {
+        if (mayNeedRestrictedSettingsGrant(context) && !hasUsageStats && !hasOverlay) {
             Text(
                 text = stringResource(R.string.restricted_settings_notice),
                 style = MaterialTheme.typography.bodySmall,
@@ -249,6 +249,11 @@ fun isSideloaded(context: Context): Boolean {
 
 fun mayNeedRestrictedSettingsGrant(context: Context): Boolean =
     Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE && isSideloaded(context)
+
+fun isRestrictedSettingsLikelyAllowed(context: Context): Boolean {
+    if (!mayNeedRestrictedSettingsGrant(context)) return true
+    return hasUsageStatsPermission(context) || Settings.canDrawOverlays(context)
+}
 
 private const val PLAY_STORE_PACKAGE = "com.android.vending"
 
