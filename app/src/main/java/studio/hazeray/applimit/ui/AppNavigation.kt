@@ -78,6 +78,7 @@ fun AppNavigation(navController: NavHostController, startDestination: String = "
             }
             SettingsScreen(
                 viewModel = viewModel,
+                onSaved = { navController.popBackStack() },
                 onDeleted = { navController.popBackStack() }
             )
         }
