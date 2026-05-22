@@ -1,6 +1,9 @@
 package studio.hazeray.applimit.ui.main
 
+import android.content.Context
+import android.content.pm.PackageManager
 import android.provider.Settings
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -10,9 +13,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
@@ -34,9 +40,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -70,7 +79,7 @@ fun MainScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(R.string.app_name)) },
+                title = { Text(stringResource(R.string.main_screen_title)) },
                 actions = {
                     IconButton(onClick = onAppSettings) {
                         Icon(Icons.Filled.Settings, contentDescription = "設定")
@@ -161,6 +170,11 @@ private fun PermissionWarningBanner(onClick: () -> Unit) {
 
 @Composable
 private fun TargetAppItem(row: TargetAppRowState, onToggle: () -> Unit, onClick: () -> Unit) {
+    val context = LocalContext.current
+    val iconBitmap = remember(row.app.packageName) {
+        loadAppIcon(context, row.app.packageName)
+    }
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -173,6 +187,16 @@ private fun TargetAppItem(row: TargetAppRowState, onToggle: () -> Unit, onClick:
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            if (iconBitmap != null) {
+                Image(
+                    bitmap = iconBitmap,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp)
+                )
+            } else {
+                Spacer(modifier = Modifier.size(40.dp))
+            }
+            Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = row.app.appName,
@@ -190,6 +214,11 @@ private fun TargetAppItem(row: TargetAppRowState, onToggle: () -> Unit, onClick:
                     color = MaterialTheme.colorScheme.primary
                 )
             }
+            Icon(
+                imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                contentDescription = stringResource(R.string.open_app_settings_cd),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
             Switch(
                 checked = row.app.isEnabled,
                 onCheckedChange = { onToggle() }
@@ -197,6 +226,17 @@ private fun TargetAppItem(row: TargetAppRowState, onToggle: () -> Unit, onClick:
         }
     }
 }
+
+private fun loadAppIcon(context: Context, packageName: String): ImageBitmap? = try {
+    context.packageManager
+        .getApplicationIcon(packageName)
+        .toBitmap(width = ICON_PX, height = ICON_PX)
+        .asImageBitmap()
+} catch (_: PackageManager.NameNotFoundException) {
+    null
+}
+
+private const val ICON_PX = 96
 
 @Composable
 private fun sessionStatusText(status: SessionStatus): String = when (status) {

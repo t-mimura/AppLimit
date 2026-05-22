@@ -16,6 +16,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -25,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -33,15 +36,28 @@ import studio.hazeray.applimit.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppSelectScreen(viewModel: AppSelectViewModel, onAppAdded: () -> Unit) {
+fun AppSelectScreen(viewModel: AppSelectViewModel, onAppAdded: (Long) -> Unit) {
     val filteredApps by viewModel.filteredApps.collectAsState()
     val searchQuery by viewModel.searchQuery.collectAsState()
-    val appAdded by viewModel.appAdded.collectAsState()
+    val addedAppId by viewModel.addedAppId.collectAsState()
+    val duplicateSelected by viewModel.duplicateSelected.collectAsState()
+    val addedPackages by viewModel.addedPackages.collectAsState()
 
-    LaunchedEffect(appAdded) {
-        if (appAdded) {
-            viewModel.resetAppAdded()
-            onAppAdded()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val duplicateMessage = stringResource(R.string.app_already_added_message)
+
+    LaunchedEffect(addedAppId) {
+        val id = addedAppId
+        if (id != null) {
+            viewModel.resetAddedAppId()
+            onAppAdded(id)
+        }
+    }
+
+    LaunchedEffect(duplicateSelected) {
+        if (duplicateSelected) {
+            snackbarHostState.showSnackbar(duplicateMessage)
+            viewModel.resetDuplicateSelected()
         }
     }
 
@@ -50,7 +66,8 @@ fun AppSelectScreen(viewModel: AppSelectViewModel, onAppAdded: () -> Unit) {
             TopAppBar(
                 title = { Text(stringResource(R.string.select_app_title)) }
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -71,6 +88,7 @@ fun AppSelectScreen(viewModel: AppSelectViewModel, onAppAdded: () -> Unit) {
                 items(filteredApps, key = { it.packageName }) { app ->
                     InstalledAppItem(
                         app = app,
+                        alreadyAdded = app.packageName in addedPackages,
                         onClick = { viewModel.selectApp(app) }
                     )
                 }
@@ -80,7 +98,7 @@ fun AppSelectScreen(viewModel: AppSelectViewModel, onAppAdded: () -> Unit) {
 }
 
 @Composable
-private fun InstalledAppItem(app: InstalledApp, onClick: () -> Unit) {
+private fun InstalledAppItem(app: InstalledApp, alreadyAdded: Boolean, onClick: () -> Unit) {
     val iconBitmap = remember(app.packageName) {
         app.icon?.toBitmap(width = ICON_PX, height = ICON_PX)?.asImageBitmap()
     }
@@ -89,6 +107,7 @@ private fun InstalledAppItem(app: InstalledApp, onClick: () -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
+            .alpha(if (alreadyAdded) 0.5f else 1f)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -102,7 +121,7 @@ private fun InstalledAppItem(app: InstalledApp, onClick: () -> Unit) {
             Spacer(modifier = Modifier.size(40.dp))
         }
         Spacer(modifier = Modifier.width(12.dp))
-        Column {
+        Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = app.appName,
                 style = MaterialTheme.typography.bodyLarge
@@ -110,6 +129,13 @@ private fun InstalledAppItem(app: InstalledApp, onClick: () -> Unit) {
             Text(
                 text = app.packageName,
                 style = MaterialTheme.typography.bodySmall
+            )
+        }
+        if (alreadyAdded) {
+            Text(
+                text = stringResource(R.string.app_already_added_label),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary
             )
         }
     }

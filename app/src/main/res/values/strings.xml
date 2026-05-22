@@ -3,7 +3,9 @@
     <string name="app_name">AppLimit</string>
 
     <!-- Main Screen -->
+    <string name="main_screen_title">監視対象アプリ一覧</string>
     <string name="empty_list_message">制限対象のアプリがありません\n+ボタンから追加してください</string>
+    <string name="open_app_settings_cd">設定を開く</string>
     <string name="permission_warning_banner">権限が不足しているため監視できていません。タップして設定を開いてください。</string>
     <string name="limit_time_label">制限時間: %d分</string>
     <string name="session_status_not_started">セッション未開始</string>
@@ -14,6 +16,8 @@
     <!-- App Select Screen -->
     <string name="select_app_title">アプリを選択</string>
     <string name="search_hint">アプリ名で検索</string>
+    <string name="app_already_added_label">追加済み</string>
+    <string name="app_already_added_message">このアプリは追加済みです</string>
 
     <!-- Settings Screen -->
     <string name="enabled_label">有効</string>
