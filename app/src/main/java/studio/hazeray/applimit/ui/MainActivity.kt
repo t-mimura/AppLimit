@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
@@ -14,6 +13,7 @@ import javax.inject.Inject
 import studio.hazeray.applimit.service.MonitorService
 import studio.hazeray.applimit.service.NotificationHelper
 import studio.hazeray.applimit.ui.permission.hasAllRequiredPermissions
+import studio.hazeray.applimit.ui.theme.AppLimitTheme
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
         val startDestination = if (hasAllRequiredPermissions(this)) "main" else "permission"
 
         setContent {
-            MaterialTheme {
+            AppLimitTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     val navController = rememberNavController()
                     AppNavigation(
