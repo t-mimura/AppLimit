@@ -95,7 +95,7 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
         ) {
             SectionHeader(stringResource(R.string.app_settings_section_permissions))
 
-            if (mayNeedRestrictedSettingsGrant(context) && !hasUsageStats && !hasOverlay) {
+            if (mayNeedRestrictedSettingsGrant(context)) {
                 Text(
                     text = stringResource(R.string.restricted_settings_notice),
                     style = MaterialTheme.typography.bodySmall

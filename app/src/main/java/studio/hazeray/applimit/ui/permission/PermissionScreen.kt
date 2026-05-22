@@ -99,7 +99,7 @@ fun PermissionScreen(onAllGranted: () -> Unit) {
 
         Spacer(modifier = Modifier.height(32.dp))
 
-        if (mayNeedRestrictedSettingsGrant(context) && !hasUsageStats && !hasOverlay) {
+        if (mayNeedRestrictedSettingsGrant(context)) {
             Text(
                 text = stringResource(R.string.restricted_settings_notice),
                 style = MaterialTheme.typography.bodySmall,
