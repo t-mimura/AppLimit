@@ -351,6 +351,6 @@ class MonitorService : LifecycleService() {
     companion object {
         private const val TAG = "AppLimitMonitor"
         private const val POLLING_INTERVAL_MS = 3_000L
-        private const val UPDATE_CHECK_INTERVAL_MS = 24L * 60L * 60L * 1_000L
+        private const val UPDATE_CHECK_INTERVAL_MS = 12L * 60L * 60L * 1_000L
     }
 }
