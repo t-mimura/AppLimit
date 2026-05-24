@@ -11,11 +11,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
@@ -56,11 +61,38 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
 
     val app = draft ?: return
     var showDeleteConfirm by remember { mutableStateOf(false) }
+    var menuExpanded by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(app.appName) }
+                title = { Text(app.appName) },
+                actions = {
+                    IconButton(onClick = { menuExpanded = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.MoreVert,
+                            contentDescription = stringResource(R.string.menu_more)
+                        )
+                    }
+                    DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete_button_short)) },
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Filled.Delete,
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                menuExpanded = false
+                                showDeleteConfirm = true
+                            }
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
@@ -71,10 +103,8 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
                 .padding(horizontal = 24.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            // App icon header
             AppIconHeader(packageName = app.packageName, appName = app.appName)
 
-            // Enabled toggle
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -90,7 +120,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
                 )
             }
 
-            // Limit minutes slider: 1..10 step 1, 10..60 step 5
+            // 1..10 step 1, 10..60 step 5
             SliderSetting(
                 label = stringResource(R.string.limit_minutes_label),
                 value = app.limitMinutes.toFloat(),
@@ -99,7 +129,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
                 onValueChange = { viewModel.updateLimitMinutes(snapMinutes(it)) }
             )
 
-            // Cooldown minutes slider: 1..10 step 1, 10..120 step 5
+            // 1..10 step 1, 10..120 step 5
             SliderSetting(
                 label = stringResource(R.string.cooldown_minutes_label),
                 value = app.cooldownMinutes.toFloat(),
@@ -108,7 +138,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
                 onValueChange = { viewModel.updateCooldownMinutes(snapMinutes(it)) }
             )
 
-            // Extension minutes slider: 1..10 step 1
+            // 1..10 step 1
             SliderSetting(
                 label = stringResource(R.string.extension_minutes_label),
                 value = app.extensionMinutes.toFloat(),
@@ -119,25 +149,11 @@ fun SettingsScreen(viewModel: SettingsViewModel, onSaved: () -> Unit, onDeleted:
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Save button (primary)
             Button(
                 onClick = { viewModel.save() },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(stringResource(R.string.save_button))
-            }
-
-            HorizontalDivider()
-
-            // Delete button (destructive)
-            Button(
-                onClick = { showDeleteConfirm = true },
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.error
-                )
-            ) {
-                Text(stringResource(R.string.delete_button))
             }
         }
     }
