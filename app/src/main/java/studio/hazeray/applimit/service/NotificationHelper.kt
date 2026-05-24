@@ -42,10 +42,15 @@ class NotificationHelper @Inject constructor(
             val updateChannel = NotificationChannel(
                 UPDATE_CHANNEL_ID,
                 context.getString(R.string.update_channel_name),
-                NotificationManager.IMPORTANCE_LOW
+                NotificationManager.IMPORTANCE_DEFAULT
             ).apply {
                 description = context.getString(R.string.update_channel_desc)
             }
+
+            // The previous "update" channel was registered with IMPORTANCE_LOW,
+            // which Android won't let us raise programmatically — drop it so it
+            // doesn't linger in system settings.
+            notificationManager.deleteNotificationChannel(LEGACY_UPDATE_CHANNEL_ID)
 
             notificationManager.createNotificationChannel(monitorChannel)
             notificationManager.createNotificationChannel(warningChannel)
@@ -125,7 +130,7 @@ class NotificationHelper @Inject constructor(
             .setSmallIcon(android.R.drawable.stat_sys_download_done)
             .setContentTitle(context.getString(R.string.update_ready_title))
             .setContentText(context.getString(R.string.update_ready_text, version))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
             .setAutoCancel(true)
             .setContentIntent(pendingIntent)
             .build()
@@ -139,10 +144,11 @@ class NotificationHelper @Inject constructor(
     companion object {
         const val MONITOR_CHANNEL_ID = "monitor_service"
         const val WARNING_CHANNEL_ID = "warning"
-        const val UPDATE_CHANNEL_ID = "update"
+        const val UPDATE_CHANNEL_ID = "update_v2"
         const val MONITOR_NOTIFICATION_ID = 1
         const val WARNING_NOTIFICATION_ID = 2
         const val LIMIT_NOTIFICATION_ID = 3
         const val UPDATE_NOTIFICATION_ID = 4
+        private const val LEGACY_UPDATE_CHANNEL_ID = "update"
     }
 }
