@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -32,7 +34,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -42,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import kotlinx.coroutines.launch
 import studio.hazeray.applimit.BuildConfig
 import studio.hazeray.applimit.R
 import studio.hazeray.applimit.ui.permission.hasNotificationPermission
@@ -96,42 +99,52 @@ fun AppSettingsScreen(onBack: () -> Unit, onDebug: () -> Unit) {
             if (showOtherTab) add(stringResource(R.string.app_settings_section_other))
             if (BuildConfig.DEBUG) add(stringResource(R.string.app_settings_section_debug))
         }
-        var selectedTab by rememberSaveable { mutableStateOf(0) }
+        val pagerState = rememberPagerState(pageCount = { tabs.size })
+        val scope = rememberCoroutineScope()
 
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            TabRow(selectedTabIndex = selectedTab) {
+            TabRow(selectedTabIndex = pagerState.currentPage) {
                 tabs.forEachIndexed { index, label ->
                     Tab(
-                        selected = selectedTab == index,
-                        onClick = { selectedTab = index },
+                        selected = pagerState.currentPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(label) }
                     )
                 }
             }
 
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 16.dp)
-            ) {
-                when (tabs.getOrNull(selectedTab)) {
-                    stringResource(
-                        R.string.app_settings_section_permissions
-                    ) -> PermissionsTabContent(
-                        context = context,
-                        hasUsageStats = hasUsageStats,
-                        hasOverlay = hasOverlay,
-                        hasNotification = hasNotification,
-                        hasBatteryExempt = hasBatteryExempt
-                    )
-                    stringResource(R.string.update_section_title) -> UpdateSection()
-                    stringResource(R.string.app_settings_section_other) -> OtherTabContent(context)
-                    stringResource(R.string.app_settings_section_debug) -> DebugTabContent(onDebug)
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = 16.dp)
+                ) {
+                    when (tabs.getOrNull(page)) {
+                        stringResource(
+                            R.string.app_settings_section_permissions
+                        ) -> PermissionsTabContent(
+                            context = context,
+                            hasUsageStats = hasUsageStats,
+                            hasOverlay = hasOverlay,
+                            hasNotification = hasNotification,
+                            hasBatteryExempt = hasBatteryExempt
+                        )
+                        stringResource(R.string.update_section_title) -> UpdateSection()
+                        stringResource(
+                            R.string.app_settings_section_other
+                        ) -> OtherTabContent(context)
+                        stringResource(
+                            R.string.app_settings_section_debug
+                        ) -> DebugTabContent(onDebug)
+                    }
                 }
             }
         }

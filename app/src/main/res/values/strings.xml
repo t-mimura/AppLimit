@@ -26,8 +26,8 @@
     <string name="extension_minutes_label">延長時間</string>
     <string name="minutes_format">%d分</string>
     <string name="save_button">保存</string>
-    <string name="delete_button">この対象アプリを削除</string>
     <string name="delete_button_short">削除</string>
+    <string name="menu_more">メニュー</string>
     <string name="cancel_button">キャンセル</string>
     <string name="delete_confirm_title">削除の確認</string>
     <string name="delete_confirm_message">本当にこの監視対象を削除しますか？</string>
