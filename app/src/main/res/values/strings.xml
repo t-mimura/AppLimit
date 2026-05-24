@@ -78,8 +78,8 @@
     <string name="warning_notification_text">%1$sの制限時間まで残り%2$d分です</string>
     <string name="limit_reached_title">制限時間到達</string>
     <string name="limit_reached_text">%1$sの制限時間に達しました</string>
-    <string name="update_ready_title">アプリの更新準備が完了しました</string>
-    <string name="update_ready_text">新しいバージョン v%1$s をインストールできます</string>
+    <string name="update_ready_title">アップデートの準備ができました</string>
+    <string name="update_ready_text">タップして v%1$s のインストールを開始してください</string>
 
     <!-- Update Section -->
     <string name="update_section_title">アプリ更新</string>

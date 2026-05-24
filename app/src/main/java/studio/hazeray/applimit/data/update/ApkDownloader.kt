@@ -33,9 +33,7 @@ class ApkDownloader @Inject constructor(@ApplicationContext private val context:
         val request = DownloadManager.Request(Uri.parse(url))
             .setTitle("AppLimit v$version")
             .setDestinationUri(Uri.fromFile(targetFile))
-            .setNotificationVisibility(
-                DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED
-            )
+            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_HIDDEN)
             .setAllowedOverMetered(true)
             .setAllowedOverRoaming(true)
 
